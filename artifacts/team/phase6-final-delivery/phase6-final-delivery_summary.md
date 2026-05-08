@@ -84,14 +84,18 @@ Environment variable:
 ```
 
 Public backend URL: `TBD`
-Public frontend URL: `TBD`
+Public frontend URL: `https://frontend-gamma-gold-32.vercel.app`
 GitHub source branch: `https://github.com/zeussilver/regexflow-ai/tree/codex/phase6-final-delivery`
 
-Deployment attempt notes:
+Deployment notes:
 
 - GitHub CLI is authenticated locally.
-- `vercel`, `railway`, and `render` CLIs were not installed.
-- `npx vercel whoami` started a device-login flow and found no existing Vercel credentials, so frontend deployment could not be completed non-interactively.
+- Initial `npx vercel whoami` started a device-login flow and found no existing Vercel CLI credentials.
+- After user completed Vercel CLI device login, frontend deployment succeeded.
+- Vercel project: `frontend`, project ID `prj_Wg60FrRlgiTdJKwuuptUBmi8ciqt`.
+- Vercel deployment ID: `dpl_7EcQRf4ptKHQBQxdgj2vniDZnooA`.
+- Vercel alias URL verified with HTTP 200: `https://frontend-gamma-gold-32.vercel.app`.
+- `railway` and `render` CLIs were not installed.
 - No Render/Railway project credentials or CLI session were available for backend deployment.
 
 ## README Sections Completed
@@ -127,6 +131,7 @@ Demo video link added: `TBD`
 | `cd backend && .venv/bin/python manage.py collectstatic --noinput` | PASS | Static output generated under ignored `backend/staticfiles/` |
 | `cd frontend && npm run build` | PASS | TypeScript and Vite production build passed |
 | `cd frontend && npm run lint` | N/A | No `lint` script exists in `frontend/package.json` |
+| Vercel frontend URL | PASS | `https://frontend-gamma-gold-32.vercel.app` returned HTTP 200 |
 | README required section grep | PASS | Required sections present |
 | README API endpoint grep | PASS | Required six endpoints documented |
 | Tracked artifact scan | PASS | No tracked `.env`, cache, media, build, node_modules, log, `.DS_Store`, or SQLite artifacts |
@@ -171,7 +176,7 @@ HSTS, SSL redirect, and secure CSRF cookie settings should be decided based on t
 |---|---:|---|
 | GitHub repository/source code ready | PASS | Branch pushed to `origin/codex/phase6-final-delivery` |
 | Complete README | PASS | Completed with placeholders for public URLs/video |
-| Public frontend deployment URL | BLOCKED | Requires Vercel/login or equivalent deployment |
+| Public frontend deployment URL | PASS | Vercel URL verified: `https://frontend-gamma-gold-32.vercel.app` |
 | Public backend API URL | BLOCKED | Requires Render/Railway/project deployment |
 | Demo video embedded or linked | BLOCKED | Script ready; video not recorded/uploaded |
 | Working end-to-end deployed app | BLOCKED | Public deployments not available in this execution |
@@ -183,8 +188,8 @@ HSTS, SSL redirect, and secure CSRF cookie settings should be decided based on t
 1. Merge `codex/phase6-final-delivery` to the final submission branch when ready.
 2. Deploy backend using the README settings and configure backend env vars.
 3. Verify `https://<backend-host>/api/health/`.
-4. Deploy frontend with `VITE_API_BASE_URL=https://<backend-host>/api`.
+4. Update Vercel `VITE_API_BASE_URL=https://<backend-host>/api` and redeploy/promote the frontend if needed.
 5. Run deployed manual checks in `docs/manual-test-checklist.md`.
 6. Record and upload the demo video using `docs/demo-video-script.md`.
-7. Replace README placeholders with verified public frontend, backend, and demo video URLs.
+7. Replace README placeholders with verified backend and demo video URLs.
 8. Re-run final scans and mark the decision `SUBMISSION_READY`.

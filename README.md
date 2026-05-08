@@ -14,10 +14,10 @@ RegexFlow AI uses the LLM only to propose regex patterns or bounded transformati
 ## Live Demo
 
 - Source code: `https://github.com/zeussilver/regexflow-ai/tree/codex/phase6-final-delivery`
-- Frontend: `TODO: <DEPLOYED_FRONTEND_URL>`
+- Frontend: `https://frontend-gamma-gold-32.vercel.app`
 - Backend API: `TODO: <DEPLOYED_BACKEND_URL>/api`
 
-Deployment URLs are placeholders until the final integration lead provides and verifies live deployment links. Local setup remains available for development and fallback testing.
+The frontend is deployed on Vercel. The backend API URL is still a placeholder until the Django backend is deployed and verified. Local setup remains available for development and fallback testing.
 
 ## Demo Video
 
@@ -475,9 +475,9 @@ Deployment-specific values to configure:
 - LLM provider credentials and model values.
 - Persistent storage strategy for uploaded and processed files.
 
-Current deployment placeholders:
+Current deployment status:
 
-- Frontend: `TODO: <DEPLOYED_FRONTEND_URL>`
+- Frontend: `https://frontend-gamma-gold-32.vercel.app`
 - Backend API: `TODO: <DEPLOYED_BACKEND_URL>/api`
 
 ## Known Limitations

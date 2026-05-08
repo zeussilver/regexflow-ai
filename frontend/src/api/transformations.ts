@@ -1,5 +1,6 @@
 import axios from "axios";
 
+import { apiClient } from "./client";
 import {
   PhoneNormalizationRequest,
   PhoneNormalizationResponse,
@@ -8,10 +9,6 @@ import {
   TransformationApiError,
   TransformationApiErrorPayload,
 } from "../types/transformations";
-
-const apiClient = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000/api",
-});
 
 export async function redactPii(payload: PiiRedactionRequest): Promise<PiiRedactionResponse> {
   try {
@@ -24,7 +21,7 @@ export async function redactPii(payload: PiiRedactionRequest): Promise<PiiRedact
     throw toTransformationApiError(
       error,
       "PII_REDACTION_FAILED",
-      "PII redaction could not be applied. Check that Django is running and try again.",
+      "PII redaction could not be applied. The backend API is unavailable; check the configured API URL and try again.",
     );
   }
 }
@@ -42,7 +39,7 @@ export async function normalizePhones(
     throw toTransformationApiError(
       error,
       "PHONE_NORMALIZATION_FAILED",
-      "Phone normalization could not be applied. Check that Django is running and the LLM is configured.",
+      "Phone normalization could not be applied. The backend API is unavailable; check the configured API URL and try again.",
     );
   }
 }

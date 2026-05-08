@@ -42,6 +42,8 @@ The codebase, README, deployment configuration, demo script, repository hygiene,
 | W1D | `codex/phase6-w1d-readme-demo` | Yes | README and demo script | README completed with placeholders for external URLs |
 | W1E | `codex/phase6-w1e-regression-report` | Yes | Regression checklist/report scaffold | Finalized by Lead after integrated validation |
 
+Worker worktree closeout: all five completed worker worktrees were clean and removed after integration.
+
 ## Backend Production-Readiness Changes
 
 - `backend/.env.example` now uses safe production-oriented placeholders:

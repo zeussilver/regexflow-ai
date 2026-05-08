@@ -93,7 +93,8 @@ Deployment notes:
 - Initial `npx vercel whoami` started a device-login flow and found no existing Vercel CLI credentials.
 - After user completed Vercel CLI device login, frontend deployment succeeded.
 - Vercel project: `frontend`, project ID `prj_Wg60FrRlgiTdJKwuuptUBmi8ciqt`.
-- Vercel deployment ID: `dpl_7EcQRf4ptKHQBQxdgj2vniDZnooA`.
+- Vercel deployment ID: `dpl_DoJpxQ2f3wTP5Dg44ocKEjpsxTLP`.
+- Vercel deployment URL: `https://frontend-jl31ckfn8-zeussilver1663-2783s-projects.vercel.app`.
 - Vercel alias URL verified with HTTP 200: `https://frontend-gamma-gold-32.vercel.app`.
 - `railway` and `render` CLIs were not installed.
 - No Render/Railway project credentials or CLI session were available for backend deployment.

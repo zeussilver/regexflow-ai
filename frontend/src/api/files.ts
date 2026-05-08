@@ -1,12 +1,7 @@
 import axios from "axios";
 
+import { apiBaseUrl, apiClient } from "./client";
 import { ApiErrorPayload, FileUploadResponse, UploadApiError } from "../types/files";
-
-const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000/api";
-
-const apiClient = axios.create({
-  baseURL: apiBaseUrl,
-});
 
 export async function uploadFile(file: File): Promise<FileUploadResponse> {
   const formData = new FormData();
@@ -25,12 +20,11 @@ export async function uploadFile(file: File): Promise<FileUploadResponse> {
 
     throw new UploadApiError(
       "UPLOAD_FAILED",
-      "The file could not be uploaded. Check that Django is running at http://localhost:8000 and reload the frontend.",
+      "The file could not be uploaded. The backend API is unavailable; check the configured API URL and try again.",
     );
   }
 }
 
 export function getProcessedFileDownloadUrl(processedFileId: string): string {
-  const normalizedBaseUrl = apiBaseUrl.replace(/\/+$/, "");
-  return `${normalizedBaseUrl}/files/processed/${encodeURIComponent(processedFileId)}/download/`;
+  return `${apiBaseUrl}/files/processed/${encodeURIComponent(processedFileId)}/download/`;
 }

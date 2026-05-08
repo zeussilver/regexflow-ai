@@ -13,6 +13,7 @@ RegexFlow AI uses the LLM only to propose regex patterns or bounded transformati
 
 ## Live Demo
 
+- Source code: `https://github.com/zeussilver/regexflow-ai`
 - Frontend: `TODO: <DEPLOYED_FRONTEND_URL>`
 - Backend API: `TODO: <DEPLOYED_BACKEND_URL>/api`
 

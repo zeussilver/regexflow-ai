@@ -83,6 +83,7 @@ Environment variable:
 
 Public backend URL: `TBD`
 Public frontend URL: `TBD`
+GitHub source branch: `https://github.com/zeussilver/regexflow-ai/tree/codex/phase6-final-delivery`
 
 Deployment attempt notes:
 
@@ -166,7 +167,7 @@ HSTS, SSL redirect, and secure CSRF cookie settings should be decided based on t
 
 | Criterion | Status | Notes |
 |---|---:|---|
-| GitHub repository/source code ready | Partial | Local branch ready; push/merge remains a release step |
+| GitHub repository/source code ready | PASS | Branch pushed to `origin/codex/phase6-final-delivery` |
 | Complete README | PASS | Completed with placeholders for public URLs/video |
 | Public frontend deployment URL | BLOCKED | Requires Vercel/login or equivalent deployment |
 | Public backend API URL | BLOCKED | Requires Render/Railway/project deployment |
@@ -177,7 +178,7 @@ HSTS, SSL redirect, and secure CSRF cookie settings should be decided based on t
 
 ## Next Required Step
 
-1. Push this branch or merge it to the submission branch.
+1. Merge `codex/phase6-final-delivery` to the final submission branch when ready.
 2. Deploy backend using the README settings and configure backend env vars.
 3. Verify `https://<backend-host>/api/health/`.
 4. Deploy frontend with `VITE_API_BASE_URL=https://<backend-host>/api`.

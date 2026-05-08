@@ -73,3 +73,10 @@ Result: no matches.
 - No real public deployment URL or demo video URL was invented.
 - README placeholders should be replaced only after the lead verifies real final links.
 - This branch was not merged into `codex/phase6-final-delivery`.
+
+## Lead Review Notes
+
+- Merged into the integration branch and then calibrated README environment variables against the integrated backend `.env.example`.
+- Added backend and frontend deployment command details to README.
+- Adjusted the demo script to prefer the deployed frontend flow while retaining a clearly labeled local fallback.
+- Added a top-level `LICENSE` file during Lead integration because Phase 6 repository structure requires one.

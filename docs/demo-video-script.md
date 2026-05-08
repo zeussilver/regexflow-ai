@@ -4,10 +4,10 @@ Target length: 2-4 minutes.
 
 ## Pre-Recording Checklist
 
-- Backend is running at `http://localhost:8000`.
-- Frontend is running at `http://localhost:5173`.
-- `frontend/.env` points to `VITE_API_BASE_URL=http://localhost:8000/api`.
-- Backend LLM variables are configured in `backend/.env` with non-placeholder values.
+- Public backend is deployed and awake.
+- Public frontend is deployed and points to the backend with `VITE_API_BASE_URL=https://<backend-host>/api`.
+- Backend LLM variables are configured in the backend deployment environment with non-placeholder values.
+- For a local fallback recording only, backend is running at `http://localhost:8000`, frontend is running at `http://localhost:5173`, and `frontend/.env` points to `VITE_API_BASE_URL=http://localhost:8000/api`.
 - Browser console has no unexpected startup errors.
 - The `samples/` folder is visible and ready:
   - `samples/sample_email_redaction.csv`
@@ -24,9 +24,9 @@ Show the README title and the Live Demo / Demo Video sections.
 
 Voiceover:
 
-"This is RegexFlow AI, a Django and React app for AI-assisted regex and data transformation workflows. The README includes placeholders for the deployed frontend, deployed backend API, and demo video link until those are verified by the final integration lead. For this recording, I am running the app locally."
+"This is RegexFlow AI, a Django and React app for AI-assisted regex and data transformation workflows. The README links to the deployed frontend, deployed backend API, and this demo video once the final integration lead has verified those links."
 
-Open the frontend at `http://localhost:5173`.
+Open the deployed frontend URL. If public deployment is not available yet, use `http://localhost:5173` and state that this is a local fallback recording.
 
 ### 0:20-1:10 - Upload And Regex Generation
 

@@ -16,7 +16,7 @@ RegexFlow AI uses the LLM only to propose regex patterns or bounded transformati
 - Frontend: `TODO: <DEPLOYED_FRONTEND_URL>`
 - Backend API: `TODO: <DEPLOYED_BACKEND_URL>/api`
 
-Deployment URLs are placeholders until the final integration lead provides and verifies live deployment links. For grading without deployed URLs, run the app locally using the setup steps below.
+Deployment URLs are placeholders until the final integration lead provides and verifies live deployment links. Local setup remains available for development and fallback testing.
 
 ## Demo Video
 
@@ -168,16 +168,18 @@ Create `backend/.env` from `backend/.env.example`.
 
 | Variable | Example | Purpose |
 | --- | --- | --- |
-| `DJANGO_SECRET_KEY` | `local-dev-secret-key` | Django secret key for local development. Use a real secret outside local demo use. |
-| `DJANGO_DEBUG` | `1` | Enables local debug behavior. Set to `0` in production-like deployments. |
-| `DJANGO_ALLOWED_HOSTS` | `localhost,127.0.0.1` | Comma-separated allowed hostnames. |
-| `CORS_ALLOWED_ORIGINS` | `http://localhost:5173` | Comma-separated frontend origins allowed by Django CORS. |
-| `CORS_ALLOW_ALL_ORIGINS` | `1` | Local convenience flag for broad CORS during development. Disable for production-like deployments. |
+| `DJANGO_SECRET_KEY` | `replace-this-secret` | Django secret key. Use a strong generated value for any deployed backend. |
+| `DJANGO_DEBUG` | `False` | Keep `False` in production. Local development can set `True` when needed. |
+| `DJANGO_ALLOWED_HOSTS` | `localhost,127.0.0.1,your-backend-domain.com` | Comma-separated allowed hostnames. Add the deployed backend host. |
+| `CORS_ALLOWED_ORIGINS` | `http://localhost:5173,https://your-frontend-domain.vercel.app` | Comma-separated frontend origins allowed by Django CORS. Add the deployed frontend origin. |
 | `LLM_PROVIDER` | `openai_compatible` | LLM provider mode. This app currently supports the OpenAI-compatible provider path. |
 | `LLM_API_KEY` | `your_api_key_here` | API key for the configured LLM provider. Placeholder values intentionally fail. |
 | `LLM_BASE_URL` | `https://api.example.com/v1` | Base URL for the OpenAI-compatible API. |
 | `LLM_MODEL` | `your-model-name` | Chat model name used for regex, PII policy, and phone rule generation. |
-| `LLM_TIMEOUT_SECONDS` | `60` | HTTP timeout for LLM requests. |
+| `LLM_TIMEOUT_SECONDS` | `20` | HTTP timeout for LLM requests. |
+| `MAX_UPLOAD_SIZE_MB` | `5` | Upload size limit used by deployment configuration and documentation. |
+| `PREVIEW_ROW_LIMIT` | `50` | Preview row limit used by deployment configuration and documentation. |
+| `DATABASE_URL` | `postgresql://user:password@host:port/dbname` | Optional PostgreSQL connection string. If omitted, local SQLite is used. |
 
 If `LLM_API_KEY`, `LLM_BASE_URL`, or `LLM_MODEL` is missing or still set to a placeholder, LLM-backed endpoints return `LLM_CONFIG_MISSING`.
 
@@ -438,6 +440,30 @@ The repository includes Dockerfiles and `docker-compose.yml` for local container
 
 ```bash
 docker compose up --build
+```
+
+Recommended backend deployment settings for Render or Railway:
+
+```text
+Root directory: backend
+Build command: pip install -r requirements.txt && python manage.py migrate && python manage.py collectstatic --noinput
+Start command: gunicorn config.wsgi:application --bind 0.0.0.0:$PORT
+```
+
+If the platform does not expose `$PORT`, use:
+
+```text
+gunicorn config.wsgi:application --bind 0.0.0.0:8000
+```
+
+Recommended frontend deployment settings for Vercel:
+
+```text
+Root directory: frontend
+Build command: npm run build
+Output directory: dist
+Environment variable:
+  VITE_API_BASE_URL=https://your-backend-domain.com/api
 ```
 
 Deployment-specific values to configure:

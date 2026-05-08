@@ -70,6 +70,7 @@ npm run dev
 Frontend URL: `http://localhost:5173`
 
 The frontend expects `VITE_API_BASE_URL=http://localhost:8000/api`.
+For local development, the backend allows local browser origins through CORS while `DJANGO_DEBUG=1`.
 
 ## API Endpoints
 

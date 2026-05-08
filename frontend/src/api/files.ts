@@ -23,7 +23,7 @@ export async function uploadFile(file: File): Promise<FileUploadResponse> {
 
     throw new UploadApiError(
       "UPLOAD_FAILED",
-      "The file could not be uploaded. Check that the backend is running.",
+      "The file could not be uploaded. Check that Django is running at http://localhost:8000 and reload the frontend.",
     );
   }
 }

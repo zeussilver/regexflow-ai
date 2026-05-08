@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     "apps.common",
     "apps.files",
     "apps.regex_engine",
+    "apps.transformations",
 ]
 
 MIDDLEWARE = [

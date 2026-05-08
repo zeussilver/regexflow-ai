@@ -29,6 +29,8 @@ import {
 } from "../types/transformations";
 
 const defaultPiiTypes: PiiType[] = ["email", "phone", "credit_card", "url"];
+const defaultPiiInstruction =
+  "Redact common sensitive personal information from selected or text-like columns.";
 const defaultPhoneInstruction = "Normalize phone numbers to international format";
 
 export default function HomePage() {
@@ -165,6 +167,7 @@ export default function HomePage() {
     try {
       const response = await redactPii({
         file_id: previewData.file_id,
+        natural_language: defaultPiiInstruction,
         ...(piiTargetColumns.length > 0 ? { target_columns: piiTargetColumns } : {}),
         pii_types: piiTypes,
         replacement_strategy: piiReplacementStrategy,

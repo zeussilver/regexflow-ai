@@ -3,12 +3,16 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.common.responses import error_response
-from apps.files.services import save_processed_dataframe
 from apps.regex_engine import match_preview
 
-from . import phone_normalizer, phone_rule_service, pii_redactor
+from . import (
+    phone_normalizer,
+    phone_rule_service,
+    pii_policy_service,
+    pii_redactor,
+    services as transformation_services,
+)
 from .serializers import PhoneNormalizeSerializer, PiiRedactSerializer
-from .transformation_stats import cell_to_string, is_nullish, preview_records
 
 
 class PiiRedactView(APIView):
@@ -19,23 +23,22 @@ class PiiRedactView(APIView):
 
         file_id = serializer.validated_data["file_id"]
         target_columns = serializer.validated_data.get("target_columns", [])
+        natural_language = serializer.validated_data["natural_language"]
         pii_types = serializer.validated_data.get("pii_types")
         replacement_strategy = serializer.validated_data["replacement_strategy"]
 
         try:
-            dataframe = match_preview.load_uploaded_dataframe(file_id)
-            redaction_result = pii_redactor.apply_pii_redaction(
-                dataframe=dataframe,
+            payload = transformation_services.run_pii_redaction(
+                file_id=file_id,
                 target_columns=target_columns,
+                natural_language=natural_language,
                 pii_types=pii_types,
                 replacement_strategy=replacement_strategy,
             )
-            processed_file_id = save_processed_dataframe(
-                redaction_result["processed_dataframe"]
-            )
-            processed_preview = preview_records(redaction_result["preview_dataframe"])
         except match_preview.MatchPreviewError as exc:
             return _file_error_response(exc)
+        except pii_policy_service.PiiPolicyServiceError as exc:
+            return error_response(exc.code, exc.message, exc.status_code)
         except pii_redactor.PiiRedactionError as exc:
             return error_response(exc.code, exc.message, exc.status_code)
         except Exception:
@@ -45,22 +48,7 @@ class PiiRedactView(APIView):
                 http_status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
-        return Response(
-            {
-                "transformation": "pii_redaction",
-                "file_id": file_id,
-                "processed_file_id": processed_file_id,
-                "target_columns": redaction_result["target_columns"],
-                "pii_types": pii_types or list(pii_redactor.SUPPORTED_PII_TYPES),
-                "replacement_strategy": replacement_strategy,
-                "columns": list(redaction_result["processed_dataframe"].columns),
-                "row_count": int(len(redaction_result["processed_dataframe"])),
-                "preview_limit": redaction_result["preview_limit"],
-                "processed_preview": processed_preview,
-                "stats": redaction_result["stats"],
-                "warnings": redaction_result["warnings"],
-            }
-        )
+        return Response(payload)
 
     @staticmethod
     def _serializer_error_response(serializer):
@@ -69,18 +57,21 @@ class PiiRedactView(APIView):
             field_error_codes={
                 "file_id": "FILE_NOT_FOUND",
                 "target_columns": "COLUMN_NOT_FOUND",
+                "natural_language": "EMPTY_NATURAL_LANGUAGE",
                 "pii_types": "UNSUPPORTED_PII_TYPE",
                 "replacement_strategy": "UNSUPPORTED_REPLACEMENT_STRATEGY",
             },
             field_error_messages={
                 "file_id": "The uploaded file could not be found. Please upload the file again.",
                 "target_columns": "Choose at least one column before redacting PII.",
+                "natural_language": "Describe the PII redaction policy to generate.",
                 "pii_types": "Choose supported PII types to redact.",
                 "replacement_strategy": "Choose a supported replacement strategy.",
             },
             ordered_fields=(
                 "file_id",
                 "target_columns",
+                "natural_language",
                 "pii_types",
                 "replacement_strategy",
             ),
@@ -97,22 +88,10 @@ class PhoneNormalizeView(APIView):
         target_columns = serializer.validated_data["target_columns"]
 
         try:
-            dataframe = match_preview.load_uploaded_dataframe(file_id)
-            rule = self._resolve_rule(
-                dataframe=dataframe,
+            payload = transformation_services.run_phone_normalization(
+                file_id=file_id,
                 target_columns=target_columns,
                 validated_data=serializer.validated_data,
-            )
-            normalization_result = phone_normalizer.apply_phone_normalization(
-                dataframe=dataframe,
-                target_columns=target_columns,
-                rule=rule,
-            )
-            processed_file_id = save_processed_dataframe(
-                normalization_result["processed_dataframe"]
-            )
-            processed_preview = preview_records(
-                normalization_result["preview_dataframe"]
             )
         except match_preview.MatchPreviewError as exc:
             return _file_error_response(exc)
@@ -127,38 +106,7 @@ class PhoneNormalizeView(APIView):
                 http_status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
-        return Response(
-            {
-                "transformation": "phone_normalization",
-                "file_id": file_id,
-                "processed_file_id": processed_file_id,
-                "target_columns": target_columns,
-                "rule": normalization_result["rule"],
-                "columns": list(normalization_result["processed_dataframe"].columns),
-                "row_count": int(len(normalization_result["processed_dataframe"])),
-                "preview_limit": normalization_result["preview_limit"],
-                "processed_preview": processed_preview,
-                "stats": normalization_result["stats"],
-                "warnings": normalization_result["warnings"],
-            }
-        )
-
-    @staticmethod
-    def _resolve_rule(*, dataframe, target_columns, validated_data):
-        explicit_rule = dict(validated_data.get("rule") or {})
-        for field_name in ("target_format", "default_region", "preserve_invalid"):
-            if field_name in validated_data:
-                explicit_rule[field_name] = validated_data[field_name]
-
-        natural_language = validated_data.get("natural_language", "")
-        sample_values = _sample_phone_values(dataframe, target_columns)
-        llm_rule = phone_rule_service.generate_phone_normalization_rule(
-            natural_language=natural_language,
-            target_columns=target_columns,
-            sample_values=sample_values,
-        )
-        llm_rule.update(explicit_rule)
-        return llm_rule
+        return Response(payload)
 
     @staticmethod
     def _serializer_error_response(serializer):
@@ -192,28 +140,6 @@ class PhoneNormalizeView(APIView):
                 "preserve_invalid",
             ),
         )
-
-
-def _sample_phone_values(dataframe, target_columns: list[str]) -> list[str]:
-    sample_values = []
-    for column in target_columns:
-        if column not in dataframe.columns:
-            raise phone_normalizer.PhoneNormalizationError(
-                code="COLUMN_NOT_FOUND",
-                message=f"Column '{column}' was not found in the uploaded file.",
-            )
-
-        for value in dataframe[column].head(50):
-            if is_nullish(value):
-                continue
-            string_value = cell_to_string(value).strip()
-            if not string_value:
-                continue
-            sample_values.append(string_value)
-            if len(sample_values) == phone_rule_service.SAMPLE_VALUE_LIMIT:
-                return sample_values
-
-    return sample_values
 
 
 def _serializer_error_response(

@@ -9,11 +9,15 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
 
+from apps.transformations.pii_policy_service import PiiPolicyServiceError
 from apps.transformations.phone_rule_service import PhoneRuleServiceError
 
 
 TEST_MEDIA_ROOT = "/tmp/regexflow-ai-transformations-test-media"
 PREVIEW_LIMIT = 50
+PII_POLICY_SERVICE_TARGET = (
+    "apps.transformations.pii_policy_service.generate_pii_redaction_policy"
+)
 PHONE_RULE_SERVICE_TARGET = (
     "apps.transformations.phone_rule_service.generate_phone_normalization_rule"
 )
@@ -52,6 +56,16 @@ class TransformationApiTestMixin:
 
 @override_settings(MEDIA_ROOT=TEST_MEDIA_ROOT)
 class PiiRedactionApiTests(TransformationApiTestMixin, APITestCase):
+    def setUp(self):
+        super().setUp()
+        self.policy_patcher = patch(PII_POLICY_SERVICE_TARGET)
+        self.mock_generate_policy = self.policy_patcher.start()
+        self.mock_generate_policy.return_value = self._valid_pii_policy()
+
+    def tearDown(self):
+        self.policy_patcher.stop()
+        super().tearDown()
+
     def test_redacts_email_addresses(self):
         file_id = self._upload_csv(
             b"Name,Contact\nAda,ada@example.com\nGrace,grace@example.org\nPlain,not pii\n"
@@ -73,7 +87,10 @@ class PiiRedactionApiTests(TransformationApiTestMixin, APITestCase):
         self.assertEqual(payload["processed_preview"][0]["Contact"], "[EMAIL_REDACTED]")
         self.assertEqual(payload["processed_preview"][1]["Contact"], "[EMAIL_REDACTED]")
         self.assertEqual(payload["processed_preview"][2]["Contact"], "not pii")
+        self.assertEqual(payload["policy"]["pii_types"], ["email"])
+        self.assertEqual(payload["policy"]["target_columns_policy"], "selected_columns")
         self.assertEqual(payload["stats"]["by_type"]["email"]["matches"], 2)
+        self.mock_generate_policy.assert_called_once()
 
     def test_redacts_urls(self):
         file_id = self._upload_csv(
@@ -283,6 +300,62 @@ class PiiRedactionApiTests(TransformationApiTestMixin, APITestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(response.json()["error"]["code"], "COLUMN_NOT_FOUND")
 
+    def test_invalid_llm_policy_returns_unsupported_transformation_rule(self):
+        file_id = self._upload_csv(b"Name,Contact\nAda,ada@example.com\n")
+        self.mock_generate_policy.return_value = {
+            "transformation_type": "phone_normalization",
+            "pii_types": ["email"],
+            "target_columns_policy": "selected_columns",
+            "replacement_strategy": "typed_placeholders",
+            "explanation": "Wrong transformation type.",
+        }
+
+        response = self.client.post(
+            reverse("transformation-pii-redact"),
+            {
+                "file_id": file_id,
+                "target_columns": ["Contact"],
+                "pii_types": ["email"],
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_502_BAD_GATEWAY)
+        self.assertEqual(
+            response.json()["error"]["code"], "UNSUPPORTED_TRANSFORMATION_RULE"
+        )
+
+    def test_llm_policy_error_returns_structured_error(self):
+        file_id = self._upload_csv(b"Name,Contact\nAda,ada@example.com\n")
+        self.mock_generate_policy.side_effect = PiiPolicyServiceError(
+            code="LLM_INVALID_JSON",
+            message="The LLM did not return valid JSON.",
+            status_code=status.HTTP_502_BAD_GATEWAY,
+        )
+
+        response = self.client.post(
+            reverse("transformation-pii-redact"),
+            {
+                "file_id": file_id,
+                "target_columns": ["Contact"],
+                "pii_types": ["email"],
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_502_BAD_GATEWAY)
+        self.assertEqual(response.json()["error"]["code"], "LLM_INVALID_JSON")
+
+    @staticmethod
+    def _valid_pii_policy():
+        return {
+            "transformation_type": "pii_redaction",
+            "pii_types": ["email", "phone", "credit_card", "url"],
+            "target_columns_policy": "all_text_columns",
+            "replacement_strategy": "typed_placeholders",
+            "explanation": "Redact supported PII using deterministic backend rules.",
+        }
+
     def _assert_pii_success(self, payload, *, file_id, row_count):
         self.assertEqual(payload["transformation"], "pii_redaction")
         self.assertEqual(payload["file_id"], file_id)
@@ -290,6 +363,8 @@ class PiiRedactionApiTests(TransformationApiTestMixin, APITestCase):
         self.assertEqual(payload["row_count"], row_count)
         self.assertEqual(payload["preview_limit"], PREVIEW_LIMIT)
         self.assertEqual(len(payload["processed_preview"]), row_count)
+        self.assertEqual(payload["policy"]["transformation_type"], "pii_redaction")
+        self.assertIn(payload["policy"]["replacement_strategy"], {"typed_placeholders"})
 
 
 @override_settings(MEDIA_ROOT=TEST_MEDIA_ROOT)

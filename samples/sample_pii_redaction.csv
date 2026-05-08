@@ -1,0 +1,5 @@
+ID,Name,Email,Phone,Card,Website,Notes
+1,John Doe,john.doe@example.com,0412 345 678,4111 1111 1111 1111,https://example.com,Call before 5pm
+2,Jane Smith,jane@example.org,+61 412 345 678,5555 5555 5555 4444,www.website.org,VIP renewal
+3,Alice Brown,alice.brown@website.org,03 9123 4567,not-a-card,https://portal.example.net,Landline is office number
+4,Sam Taylor,,abc123,4000 0000 0000 0002,,Invalid phone should remain readable

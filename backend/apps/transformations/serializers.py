@@ -3,6 +3,7 @@ from uuid import UUID
 from rest_framework import serializers
 
 from .phone_normalizer import ALLOWED_PHONE_FORMATS
+from .pii_policy_service import DEFAULT_PII_NATURAL_LANGUAGE
 from .pii_patterns import (
     DEFAULT_REDACTION_STRATEGY,
     SUPPORTED_PII_TYPES,
@@ -64,6 +65,12 @@ class PiiRedactSerializer(TargetColumnsMixin, serializers.Serializer):
         required=False,
         allow_empty=True,
     )
+    natural_language = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        max_length=500,
+        default=DEFAULT_PII_NATURAL_LANGUAGE,
+    )
     pii_types = serializers.ListField(
         child=serializers.CharField(allow_blank=False),
         required=False,
@@ -87,6 +94,16 @@ class PiiRedactSerializer(TargetColumnsMixin, serializers.Serializer):
                 normalized_columns.append(normalized_column)
 
         return normalized_columns
+
+    def validate_natural_language(self, value):
+        normalized_value = value.strip()
+        if not normalized_value:
+            raise serializers.ValidationError(
+                "Describe the PII redaction policy to generate.",
+                code="EMPTY_NATURAL_LANGUAGE",
+            )
+
+        return normalized_value
 
     def validate_pii_types(self, value):
         normalized_types = [str(pii_type).strip().lower() for pii_type in value]

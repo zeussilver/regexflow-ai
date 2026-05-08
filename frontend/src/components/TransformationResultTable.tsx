@@ -1,5 +1,6 @@
 import { PreviewCellValue } from "../types/files";
 import { TransformationResponse } from "../types/transformations";
+import ProcessedDownloadLink from "./ProcessedDownloadLink";
 
 interface TransformationResultTableProps {
   result: TransformationResponse | null;
@@ -19,16 +20,19 @@ export default function TransformationResultTable({ result }: TransformationResu
           <p className="eyebrow">Transformation Preview</p>
           <h2>{result.transformation === "pii_redaction" ? "PII Redaction" : "Phone Normalization"}</h2>
         </div>
-        <dl className="stats">
-          <div>
-            <dt>Rows</dt>
-            <dd>{result.row_count.toLocaleString()}</dd>
-          </div>
-          <div>
-            <dt>Shown</dt>
-            <dd>{result.processed_preview.length.toLocaleString()}</dd>
-          </div>
-        </dl>
+        <div className="preview-header-actions">
+          <dl className="stats">
+            <div>
+              <dt>Rows</dt>
+              <dd>{result.row_count.toLocaleString()}</dd>
+            </div>
+            <div>
+              <dt>Shown</dt>
+              <dd>{result.processed_preview.length.toLocaleString()}</dd>
+            </div>
+          </dl>
+          <ProcessedDownloadLink processedFileId={result.processed_file_id} />
+        </div>
       </div>
 
       <div className="table-shell">

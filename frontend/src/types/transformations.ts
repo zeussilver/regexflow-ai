@@ -10,9 +10,20 @@ export type TransformationMode = "pii_redaction" | "phone_normalization";
 
 export interface PiiRedactionRequest {
   file_id: string;
+  natural_language: string;
   target_columns?: string[];
   pii_types: PiiType[];
   replacement_strategy: PiiReplacementStrategy;
+}
+
+export type PiiTargetColumnsPolicy = "all_text_columns" | "selected_columns";
+
+export interface PiiRedactionPolicy {
+  transformation_type: "pii_redaction";
+  pii_types: string[];
+  target_columns_policy: PiiTargetColumnsPolicy;
+  replacement_strategy: PiiReplacementStrategy;
+  explanation: string;
 }
 
 export interface PiiTypeStats {
@@ -35,6 +46,7 @@ export interface PiiRedactionResponse {
   row_count: number;
   preview_limit: number;
   processed_preview: PreviewRow[];
+  policy: PiiRedactionPolicy;
   stats: PiiRedactionStats;
   warnings: string[];
 }

@@ -1,5 +1,6 @@
 import { PreviewCellValue } from "../types/files";
 import { RegexReplaceResponse } from "../types/regex";
+import ProcessedDownloadLink from "./ProcessedDownloadLink";
 
 interface ProcessedDataTableProps {
   result: RegexReplaceResponse | null;
@@ -17,16 +18,19 @@ export default function ProcessedDataTable({ result }: ProcessedDataTableProps) 
           <p className="eyebrow">Processed Preview</p>
           <h2>{result.target_column}</h2>
         </div>
-        <dl className="stats">
-          <div>
-            <dt>Rows</dt>
-            <dd>{result.row_count.toLocaleString()}</dd>
-          </div>
-          <div>
-            <dt>Shown</dt>
-            <dd>{result.processed_preview.length.toLocaleString()}</dd>
-          </div>
-        </dl>
+        <div className="preview-header-actions">
+          <dl className="stats">
+            <div>
+              <dt>Rows</dt>
+              <dd>{result.row_count.toLocaleString()}</dd>
+            </div>
+            <div>
+              <dt>Shown</dt>
+              <dd>{result.processed_preview.length.toLocaleString()}</dd>
+            </div>
+          </dl>
+          <ProcessedDownloadLink processedFileId={result.processed_file_id} />
+        </div>
       </div>
 
       <div className="table-shell">

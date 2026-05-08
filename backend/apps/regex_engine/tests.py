@@ -1,3 +1,4 @@
+import json
 import os
 from pathlib import Path
 import shutil
@@ -51,6 +52,56 @@ class RegexGenerateApiTests(APITestCase):
         self.assertEqual(payload["match_preview"]["checked_rows"], 3)
         self.assertGreater(payload["match_preview"]["matched_rows"], 0)
         self.assertEqual(payload["match_preview"]["examples"][0]["row_index"], 0)
+
+    def test_regex_generation_reliability_prompt_set(self):
+        file_id = self._upload_pattern_samples_csv()
+        cases = [
+            ("Find email addresses", r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,7}\b"),
+            ("Find URLs", r"\bhttps?://[^\s]+"),
+            ("Find Australian phone numbers", r"\b(?:\+61|0)4\d{2}\s?\d{3}\s?\d{3}\b"),
+            ("Find dates in DD/MM/YYYY format", r"\b\d{2}/\d{2}/\d{4}\b"),
+            ("Find invoice IDs starting with INV-", r"\bINV-[A-Z0-9]+\b"),
+            ("Find numbers with dollar signs", r"\$\d+(?:\.\d{2})?"),
+            ("Find text inside brackets", r"\[[^\]]+\]"),
+            ("Find postcodes", r"\b\d{4}\b"),
+        ]
+
+        with patch.dict(
+            os.environ,
+            {
+                "LLM_API_KEY": "test-key",
+                "LLM_BASE_URL": "https://llm.test/v1",
+                "LLM_MODEL": "test-model",
+            },
+        ):
+            for prompt, regex in cases:
+                with self.subTest(prompt=prompt):
+                    with patch(
+                        "apps.regex_engine.llm_service._call_openai_compatible",
+                        return_value=json.dumps(
+                            {
+                                "regex": regex,
+                                "explanation": f"Pattern for: {prompt}",
+                                "flags": [],
+                                "confidence": "high",
+                            }
+                        ),
+                    ):
+                        response = self.client.post(
+                            reverse("regex-generate"),
+                            {
+                                "file_id": file_id,
+                                "target_column": "Value",
+                                "natural_language": prompt,
+                            },
+                            format="json",
+                        )
+
+                self.assertEqual(response.status_code, status.HTTP_200_OK)
+                payload = response.json()
+                self.assertEqual(payload["regex"], regex)
+                self.assertGreater(payload["match_preview"]["matched_rows"], 0)
+                self.assertEqual(payload["warnings"], [])
 
     def test_invalid_file_id_returns_file_not_found(self):
         response = self.client.post(
@@ -197,6 +248,30 @@ class RegexGenerateApiTests(APITestCase):
                 b"Ada,ada@example.com\n"
                 b"Grace,grace@example.org\n"
                 b"No Email,not-an-email\n"
+            ),
+            content_type="text/csv",
+        )
+        response = self.client.post(
+            reverse("file-upload"),
+            {"file": uploaded_file},
+            format="multipart",
+        )
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        return response.json()["file_id"]
+
+    def _upload_pattern_samples_csv(self):
+        uploaded_file = SimpleUploadedFile(
+            "patterns.csv",
+            (
+                b"Value\n"
+                b"ada@example.com\n"
+                b"https://example.com/profile\n"
+                b"0412 345 678\n"
+                b"21/05/2026\n"
+                b"INV-2026-A1\n"
+                b"$123.45\n"
+                b"[internal note]\n"
+                b"3000\n"
             ),
             content_type="text/csv",
         )

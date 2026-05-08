@@ -2,11 +2,12 @@ from rest_framework import status
 from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from django.http import FileResponse
 
 from apps.common.responses import error_response
 
 from .serializers import FileUploadSerializer
-from .services import UploadServiceError, save_and_parse_upload
+from .services import UploadServiceError, resolve_processed_file, save_and_parse_upload
 
 
 class FileUploadView(APIView):
@@ -51,3 +52,18 @@ class FileUploadView(APIView):
             message = "The uploaded file is empty."
 
         return error_response(code=str(code), message=message)
+
+
+class ProcessedFileDownloadView(APIView):
+    def get(self, request, processed_file_id):
+        try:
+            processed_path = resolve_processed_file(processed_file_id)
+        except UploadServiceError as exc:
+            return error_response(exc.code, exc.message, exc.status_code)
+
+        return FileResponse(
+            processed_path.open("rb"),
+            as_attachment=True,
+            filename=f"{processed_file_id}.csv",
+            content_type="text/csv",
+        )

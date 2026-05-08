@@ -1,0 +1,5 @@
+ID,Name,Email,Department,Notes
+1,John Doe,john.doe@example.com,Sales,Primary contact for renewal
+2,Jane Smith,jane_smith@domain.com,Support,Escalation owner
+3,Alice Brown,alice.brown@website.org,Finance,Uses shared billing inbox
+4,Bob Lee,bob.lee+demo@example.net,Operations,Demo account owner

@@ -1,0 +1,6 @@
+ID,Name,Phone,Region,Notes
+1,John Doe,0412 345 678,AU,Australian mobile
+2,Jane Smith,+61 412 345 678,AU,Already international
+3,Alice Brown,03 9123 4567,AU,Melbourne landline
+4,Bad Value,abc123,AU,Invalid value should be preserved
+5,Support Desk,1300 123 456,AU,Service number

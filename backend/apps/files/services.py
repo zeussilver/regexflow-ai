@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 import json
 from pathlib import Path
+from uuid import UUID
 from uuid import uuid4
 
 import pandas as pd
@@ -87,6 +88,27 @@ def save_processed_dataframe(dataframe: pd.DataFrame) -> str:
     processed_dir.mkdir(parents=True, exist_ok=True)
     dataframe.to_csv(processed_dir / f"{processed_file_id}.csv", index=False)
     return processed_file_id
+
+
+def resolve_processed_file(processed_file_id: str) -> Path:
+    try:
+        normalized_file_id = str(UUID(str(processed_file_id)))
+    except (TypeError, ValueError) as exc:
+        raise UploadServiceError(
+            code="FILE_NOT_FOUND",
+            message="The processed file could not be found. Please run the transformation again.",
+            status_code=status.HTTP_404_NOT_FOUND,
+        ) from exc
+
+    processed_path = Path(settings.MEDIA_ROOT) / "processed" / f"{normalized_file_id}.csv"
+    if processed_path.exists() and processed_path.is_file():
+        return processed_path
+
+    raise UploadServiceError(
+        code="FILE_NOT_FOUND",
+        message="The processed file could not be found. Please run the transformation again.",
+        status_code=status.HTTP_404_NOT_FOUND,
+    )
 
 
 def dataframe_preview_response(

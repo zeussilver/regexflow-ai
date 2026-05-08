@@ -1,4 +1,5 @@
 from io import BytesIO
+import shutil
 
 import pandas as pd
 from django.test import override_settings
@@ -7,9 +8,20 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from rest_framework import status
 from rest_framework.test import APITestCase
 
+from .services import save_processed_dataframe
 
-@override_settings(MEDIA_ROOT="/tmp/regexflow-ai-test-media")
+
+TEST_MEDIA_ROOT = "/tmp/regexflow-ai-test-media"
+
+
+@override_settings(MEDIA_ROOT=TEST_MEDIA_ROOT)
 class FileUploadApiTests(APITestCase):
+    def setUp(self):
+        shutil.rmtree(TEST_MEDIA_ROOT, ignore_errors=True)
+
+    def tearDown(self):
+        shutil.rmtree(TEST_MEDIA_ROOT, ignore_errors=True)
+
     def test_valid_csv_upload_returns_preview(self):
         uploaded_file = SimpleUploadedFile(
             "contacts.csv",
@@ -97,3 +109,38 @@ class FileUploadApiTests(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(response.json()["error"]["code"], "EMPTY_FILE")
+
+    def test_processed_file_download_returns_saved_csv(self):
+        processed_file_id = save_processed_dataframe(
+            pd.DataFrame(
+                [
+                    {"Name": "Ada", "Email": "REDACTED"},
+                    {"Name": "Grace", "Email": "REDACTED"},
+                ]
+            )
+        )
+
+        response = self.client.get(
+            reverse(
+                "processed-file-download",
+                kwargs={"processed_file_id": processed_file_id},
+            )
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response["Content-Type"], "text/csv")
+        self.assertIn("attachment", response["Content-Disposition"])
+        content = b"".join(response.streaming_content).decode("utf-8")
+        self.assertIn("Ada,REDACTED", content)
+        self.assertIn("Grace,REDACTED", content)
+
+    def test_missing_processed_file_download_returns_file_not_found(self):
+        response = self.client.get(
+            reverse(
+                "processed-file-download",
+                kwargs={"processed_file_id": "00000000-0000-0000-0000-000000000000"},
+            )
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(response.json()["error"]["code"], "FILE_NOT_FOUND")

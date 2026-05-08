@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Callable
+from typing import Callable, Optional
 
 import pandas as pd
 from pandas.api.types import is_object_dtype, is_string_dtype
@@ -31,8 +31,8 @@ class PiiRedactionError(Exception):
 def apply_pii_redaction(
     *,
     dataframe: pd.DataFrame,
-    target_columns: list[str] | None = None,
-    pii_types: list[str] | None = None,
+    target_columns: Optional[list[str]] = None,
+    pii_types: Optional[list[str]] = None,
     replacement_strategy: str = DEFAULT_REDACTION_STRATEGY,
 ) -> dict:
     normalized_target_columns = resolve_target_columns(dataframe, target_columns)
@@ -109,7 +109,7 @@ def redact_text(
 
 def resolve_target_columns(
     dataframe: pd.DataFrame,
-    target_columns: list[str] | None,
+    target_columns: Optional[list[str]],
 ) -> list[str]:
     if target_columns:
         _ensure_columns_exist(dataframe, target_columns)
@@ -167,7 +167,7 @@ def _sub_with_count(
     value: str,
     replacement_factory: Callable,
     *,
-    count_when: Callable[[str, str], bool] | None = None,
+    count_when: Optional[Callable[[str, str], bool]] = None,
 ) -> tuple[str, int]:
     replacements = 0
 
@@ -186,7 +186,7 @@ def _sub_with_count(
     return pattern.sub(replace, value), replacements
 
 
-def _normalize_pii_types(pii_types: list[str] | None) -> list[str]:
+def _normalize_pii_types(pii_types: Optional[list[str]]) -> list[str]:
     if pii_types is None:
         return list(SUPPORTED_PII_TYPES)
 

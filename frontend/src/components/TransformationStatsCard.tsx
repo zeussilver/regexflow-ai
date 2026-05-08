@@ -36,6 +36,27 @@ export default function TransformationStatsCard({ result }: TransformationStatsC
           </div>
         </dl>
 
+        {result.policy ? (
+          <div className="transformation-policy">
+            <h3>Policy</h3>
+            <dl className="policy-list">
+              <div>
+                <dt>PII Types</dt>
+                <dd>{formatList(result.policy.pii_types)}</dd>
+              </div>
+              <div>
+                <dt>Columns</dt>
+                <dd>{formatType(result.policy.target_columns_policy)}</dd>
+              </div>
+              <div>
+                <dt>Replacement</dt>
+                <dd>{formatType(result.policy.replacement_strategy)}</dd>
+              </div>
+            </dl>
+            <p className="policy-explanation">{result.policy.explanation}</p>
+          </div>
+        ) : null}
+
         {byTypeEntries.length > 0 ? (
           <div className="transformation-type-stats">
             <h3>By Type</h3>
@@ -86,5 +107,13 @@ export default function TransformationStatsCard({ result }: TransformationStatsC
 }
 
 function formatType(type: string): string {
-  return type.replace("_", " ");
+  return type.replace(/_/g, " ");
+}
+
+function formatList(values: string[]): string {
+  if (values.length === 0) {
+    return "none";
+  }
+
+  return values.map(formatType).join(", ");
 }

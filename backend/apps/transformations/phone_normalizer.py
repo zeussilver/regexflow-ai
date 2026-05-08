@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from typing import Optional
 
 import pandas as pd
 import phonenumbers
@@ -97,7 +98,7 @@ def normalize_phone_value(value: str, *, rule: dict) -> tuple[str, bool, bool]:
     return normalized_value, True, normalized_value != value
 
 
-def normalize_rule(rule: dict | None) -> dict:
+def normalize_rule(rule: Optional[dict]) -> dict:
     if not isinstance(rule, dict):
         raise PhoneNormalizationError(
             code="INVALID_TRANSFORMATION_RULE",

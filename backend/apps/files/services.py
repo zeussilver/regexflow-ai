@@ -10,6 +10,7 @@ from rest_framework import status
 
 
 PREVIEW_ROW_LIMIT = 50
+SUPPORTED_UPLOAD_EXTENSIONS = (".csv", ".xlsx")
 
 
 @dataclass
@@ -63,6 +64,29 @@ def parse_tabular_file(path: Path, extension: str) -> pd.DataFrame:
         )
 
     return dataframe
+
+
+def resolve_uploaded_file(file_id: str) -> tuple[Path, str]:
+    uploads_dir = Path(settings.MEDIA_ROOT) / "uploads"
+
+    for extension in SUPPORTED_UPLOAD_EXTENSIONS:
+        candidate = uploads_dir / f"{file_id}{extension}"
+        if candidate.exists() and candidate.is_file():
+            return candidate, extension
+
+    raise UploadServiceError(
+        code="FILE_NOT_FOUND",
+        message="The uploaded file could not be found. Please upload the file again.",
+        status_code=status.HTTP_404_NOT_FOUND,
+    )
+
+
+def save_processed_dataframe(dataframe: pd.DataFrame) -> str:
+    processed_file_id = str(uuid4())
+    processed_dir = Path(settings.MEDIA_ROOT) / "processed"
+    processed_dir.mkdir(parents=True, exist_ok=True)
+    dataframe.to_csv(processed_dir / f"{processed_file_id}.csv", index=False)
+    return processed_file_id
 
 
 def dataframe_preview_response(

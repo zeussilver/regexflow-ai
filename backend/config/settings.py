@@ -5,6 +5,19 @@ import os
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
+def load_env_file(path: Path) -> None:
+    if not path.exists():
+        return
+
+    for line in path.read_text().splitlines():
+        stripped = line.strip()
+        if not stripped or stripped.startswith("#") or "=" not in stripped:
+            continue
+
+        key, value = stripped.split("=", 1)
+        os.environ.setdefault(key.strip(), value.strip().strip("\"'"))
+
+
 def csv_env(name: str, default: str) -> list[str]:
     raw_value = os.getenv(name, default)
     return [item.strip() for item in raw_value.split(",") if item.strip()]
@@ -16,6 +29,8 @@ def bool_env(name: str, default: bool) -> bool:
         return default
     return raw_value.strip().lower() in {"1", "true", "yes", "on"}
 
+
+load_env_file(BASE_DIR / ".env")
 
 SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "local-dev-secret-key")
 
@@ -30,6 +45,7 @@ INSTALLED_APPS = [
     "rest_framework",
     "apps.common",
     "apps.files",
+    "apps.regex_engine",
 ]
 
 MIDDLEWARE = [

@@ -6,11 +6,12 @@ Phase 6 final delivery is implemented. The application is deployed with:
 
 - Frontend: `https://frontend-gamma-gold-32.vercel.app`
 - Backend API: `https://regexflow-ai-backend.onrender.com/api`
-- Production branch: `codex/phase6-final-delivery`
-- Latest verified frontend production deployment: `dpl_DueWKuu6sDfyadiQ5j8Mtgo59nwU`
-- Latest verified frontend deployment URL: `https://frontend-hzjs3kyhl-zeussilver1663-2783s-projects.vercel.app`
-- Latest verified frontend commit: `b1e4010` (`docs: update author note`)
-- Latest verified Render backend deploy: `dep-d7vgnpjeo5us73ence90`
+- Production branch: `main`
+- Latest verified frontend production deployment: `dpl_GXnfZ5YKaLn4P3KrT1hsHtfaiwae`
+- Latest verified frontend deployment URL: `https://frontend-4ztsf66z8-zeussilver1663-2783s-projects.vercel.app`
+- Latest verified commit: `04769f7` (`merge phase6 final delivery`)
+- Latest verified Render backend deploy: `dep-d7vho10u1m9s73ct95ng`
+- Last verified: 2026-05-09 21:38 AEST
 
 The application supports:
 

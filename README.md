@@ -13,10 +13,10 @@ RegexFlow AI uses the LLM only to propose regex patterns or bounded transformati
 
 ## Live Demo
 
-- Source code: `https://github.com/zeussilver/regexflow-ai/tree/codex/phase6-final-delivery`
+- Source code: `https://github.com/zeussilver/regexflow-ai/tree/main`
 - Frontend: `https://frontend-gamma-gold-32.vercel.app`
 - Backend API: `https://regexflow-ai-backend.onrender.com/api`
-- Production branch: `codex/phase6-final-delivery`
+- Production branch: `main`
 
 The public frontend URL is configured to call the Render backend API. Local setup remains available for development and fallback testing.
 
@@ -490,18 +490,18 @@ Deployment-specific values to configure:
 
 Last-verified deployment status:
 
-This records the deployment state last checked on 2026-05-09. It does not prove that current local or uncommitted changes are deployed; redeploy and reverify after code or configuration changes.
+This records the deployment state last checked on 2026-05-09 after redeploying `main`. It does not prove that future local or uncommitted changes are deployed; redeploy and reverify after code or configuration changes.
 
 - Frontend production URL: `https://frontend-gamma-gold-32.vercel.app`
 - Backend API: `https://regexflow-ai-backend.onrender.com/api`
 - Backend health check: `https://regexflow-ai-backend.onrender.com/api/health/`
-- Production branch: `codex/phase6-final-delivery`
-- Verified frontend production deployment: `dpl_DueWKuu6sDfyadiQ5j8Mtgo59nwU`
-- Verified frontend deployment URL: `https://frontend-hzjs3kyhl-zeussilver1663-2783s-projects.vercel.app`
-- Verified frontend commit: `b1e4010` (`docs: update author note`)
+- Production branch: `main`
+- Verified frontend production deployment: `dpl_GXnfZ5YKaLn4P3KrT1hsHtfaiwae`
+- Verified frontend deployment URL: `https://frontend-4ztsf66z8-zeussilver1663-2783s-projects.vercel.app`
+- Verified commit: `04769f7` (`merge phase6 final delivery`)
 - Verified Vercel production env: `VITE_API_BASE_URL=https://regexflow-ai-backend.onrender.com/api`
-- Verified Render backend deploy: `dep-d7vgnpjeo5us73ence90`
-- Last verified: 2026-05-09
+- Verified Render backend deploy: `dep-d7vho10u1m9s73ct95ng`
+- Last verified: 2026-05-09 21:38 AEST
 
 ## Known Limitations
 

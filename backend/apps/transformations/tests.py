@@ -14,6 +14,7 @@ from apps.transformations.phone_rule_service import PhoneRuleServiceError
 
 
 TEST_MEDIA_ROOT = "/tmp/regexflow-ai-transformations-test-media"
+FIXTURE_DIR = Path(__file__).resolve().parents[3] / "tests" / "fixtures" / "generated"
 PREVIEW_LIMIT = 50
 PII_POLICY_SERVICE_TARGET = (
     "apps.transformations.pii_policy_service.generate_pii_redaction_policy"
@@ -37,6 +38,27 @@ class TransformationApiTestMixin:
             "data.csv",
             content,
             content_type="text/csv",
+        )
+        response = self.client.post(
+            reverse("file-upload"),
+            {"file": uploaded_file},
+            format="multipart",
+        )
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        return response.json()["file_id"]
+
+    def _upload_fixture(self, filename):
+        path = FIXTURE_DIR / filename
+        self.assertTrue(path.exists(), f"Generated fixture is missing: {path}")
+        content_type = (
+            "text/csv"
+            if path.suffix == ".csv"
+            else "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
+        uploaded_file = SimpleUploadedFile(
+            path.name,
+            path.read_bytes(),
+            content_type=content_type,
         )
         response = self.client.post(
             reverse("file-upload"),
@@ -346,6 +368,81 @@ class PiiRedactionApiTests(TransformationApiTestMixin, APITestCase):
         self.assertEqual(response.status_code, status.HTTP_502_BAD_GATEWAY)
         self.assertEqual(response.json()["error"]["code"], "LLM_INVALID_JSON")
 
+    def test_generated_mixed_fixture_redacts_supported_pii_and_leaves_addresses(self):
+        for filename in ("mixed_pii_dataset.csv", "mixed_pii_dataset.xlsx"):
+            with self.subTest(filename=filename):
+                file_id = self._upload_fixture(filename)
+
+                response = self.client.post(
+                    reverse("transformation-pii-redact"),
+                    {
+                        "file_id": file_id,
+                        "target_columns": [
+                            "Email",
+                            "Phone",
+                            "CardNumber",
+                            "Website",
+                            "Address",
+                        ],
+                        "pii_types": ["email", "phone", "credit_card", "url"],
+                    },
+                    format="json",
+                )
+
+                self.assertEqual(response.status_code, status.HTTP_200_OK)
+                payload = response.json()
+                self.assertEqual(payload["row_count"], 8)
+                self.assertEqual(payload["processed_preview"][0]["Email"], "[EMAIL_REDACTED]")
+                self.assertEqual(payload["processed_preview"][0]["Phone"], "[PHONE_REDACTED]")
+                self.assertEqual(
+                    payload["processed_preview"][0]["CardNumber"], "[CARD_REDACTED]"
+                )
+                self.assertEqual(payload["processed_preview"][0]["Website"], "[URL_REDACTED]")
+                self.assertEqual(
+                    payload["processed_preview"][0]["Address"],
+                    "123 Collins St, Melbourne VIC 3000",
+                )
+                self.assertEqual(
+                    payload["processed_preview"][3]["CardNumber"],
+                    "1234 5678 9012 3456",
+                )
+                self.assertEqual(payload["processed_preview"][0]["InvoiceId"], "INV-1001")
+                self.assertEqual(
+                    payload["stats"],
+                    {
+                        "checked_cells": 40,
+                        "changed_cells": 18,
+                        "total_replacements": 18,
+                        "by_type": {
+                            "email": {"matches": 4, "changed_cells": 4},
+                            "phone": {"matches": 5, "changed_cells": 5},
+                            "credit_card": {"matches": 4, "changed_cells": 4},
+                            "url": {"matches": 5, "changed_cells": 5},
+                        },
+                    },
+                )
+
+    def test_generated_edge_fixture_redacts_multiple_pii_values_in_one_cell(self):
+        file_id = self._upload_fixture("edge_cases.csv")
+
+        response = self.client.post(
+            reverse("transformation-pii-redact"),
+            {
+                "file_id": file_id,
+                "target_columns": ["Notes"],
+                "pii_types": ["email", "phone", "credit_card", "url"],
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        payload = response.json()
+        self.assertEqual(
+            payload["processed_preview"][8]["Notes"],
+            "Card [CARD_REDACTED] and phone [PHONE_REDACTED]",
+        )
+        self.assertGreaterEqual(payload["stats"]["total_replacements"], 8)
+
     @staticmethod
     def _valid_pii_policy():
         return {
@@ -499,6 +596,35 @@ class PhoneNormalizationApiTests(TransformationApiTestMixin, APITestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         mock_generate_rule.assert_not_called()
         self.assertEqual(response.json()["error"]["code"], "EMPTY_NATURAL_LANGUAGE")
+
+    def test_generated_phone_fixture_normalizes_csv_and_xlsx(self):
+        for filename in ("phone_cases.csv", "phone_cases.xlsx"):
+            with self.subTest(filename=filename):
+                file_id = self._upload_fixture(filename)
+
+                response, mock_generate_rule = self._post_phone_normalize(file_id)
+
+                self.assertEqual(response.status_code, status.HTTP_200_OK)
+                mock_generate_rule.assert_called_once()
+                payload = response.json()
+                self.assertEqual(payload["row_count"], 9)
+                self.assertEqual(payload["processed_preview"][0]["Phone"], "+61412345678")
+                self.assertEqual(payload["processed_preview"][1]["Phone"], "+61412345678")
+                self.assertEqual(payload["processed_preview"][2]["Phone"], "+61391234567")
+                self.assertEqual(payload["processed_preview"][3]["Phone"], "+61391234567")
+                self.assertEqual(payload["processed_preview"][4]["Phone"], "+61391234567")
+                self.assertEqual(payload["processed_preview"][5]["Phone"], "12345")
+                self.assertEqual(payload["processed_preview"][6]["Phone"], "abc123")
+                self.assertEqual(payload["processed_preview"][0]["ID"], "P001")
+                self.assertEqual(
+                    payload["stats"],
+                    {
+                        "checked_cells": 7,
+                        "normalized_cells": 5,
+                        "invalid_cells": 2,
+                        "unchanged_cells": 2,
+                    },
+                )
 
     def _post_phone_normalize(
         self,

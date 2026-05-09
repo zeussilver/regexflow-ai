@@ -520,4 +520,4 @@ Current deployment status:
 
 ## Author
 
-RegexFlow AI was prepared for final project delivery by the Phase 6 team.
+RegexFlow AI was prepared for final project delivery by Zhenqian Liu

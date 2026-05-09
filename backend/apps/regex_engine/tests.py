@@ -13,6 +13,7 @@ from rest_framework.test import APITestCase
 
 
 TEST_MEDIA_ROOT = "/tmp/regexflow-ai-regex-test-media"
+FIXTURE_DIR = Path(__file__).resolve().parents[3] / "tests" / "fixtures" / "generated"
 
 
 @override_settings(MEDIA_ROOT=TEST_MEDIA_ROOT)
@@ -285,6 +286,125 @@ class RegexGenerateApiTests(APITestCase):
 
 
 @override_settings(MEDIA_ROOT=TEST_MEDIA_ROOT)
+class GeneratedFixtureRegexGenerateTests(APITestCase):
+    def setUp(self):
+        shutil.rmtree(TEST_MEDIA_ROOT, ignore_errors=True)
+
+    def tearDown(self):
+        shutil.rmtree(TEST_MEDIA_ROOT, ignore_errors=True)
+
+    @patch("apps.regex_engine.llm_service.generate_regex")
+    def test_generated_fixture_regex_prompt_matrix_uses_mocked_llm(
+        self, mock_generate_regex
+    ):
+        file_id = self._upload_generated_fixture("mixed_pii_dataset.csv")
+        cases = [
+            (
+                "Email",
+                "Find email addresses",
+                r"\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b",
+                ["IGNORECASE"],
+                4,
+            ),
+            (
+                "Phone",
+                "Find Australian phone numbers",
+                (
+                    r"(?<!\w)(?:\+61\s?4\d{2}\s?\d{3}\s?\d{3}|"
+                    r"\+61\s?[2378]\s?\d{4}\s?\d{4}|"
+                    r"04\d{2}\s?\d{3}\s?\d{3}|"
+                    r"0[2378]\s?\d{4}\s?\d{4}|"
+                    r"\(0[2378]\)\s?\d{4}\s?\d{4})(?!\w)"
+                ),
+                [],
+                5,
+            ),
+            (
+                "Website",
+                "Find URLs",
+                r"\b(?:https?://|www\.)[^\s,]+",
+                ["IGNORECASE"],
+                5,
+            ),
+            (
+                "CardNumber",
+                "Find card-like numbers",
+                r"(?<!\d)(?:\d[ -]?){13,19}(?!\d)",
+                [],
+                5,
+            ),
+            (
+                "Address",
+                "Find street addresses",
+                (
+                    r"(?<!\w)(?:Unit\s+\d+/\d+\s+)?\d+\s+[A-Za-z ]+"
+                    r"(?:St|Street|Road|Ave),\s+[A-Za-z ]+\s+[A-Z]{2,3}"
+                    r"\s+\d{4}(?!\w)"
+                ),
+                [],
+                4,
+            ),
+            (
+                "InvoiceId",
+                "Find values starting with INV-",
+                r"\bINV-[A-Z0-9-]+\b",
+                [],
+                5,
+            ),
+            (
+                "DateText",
+                "Find dates in DD/MM/YYYY format",
+                r"\b\d{2}/\d{2}/\d{4}\b",
+                [],
+                5,
+            ),
+        ]
+
+        for target_column, prompt, regex, flags, expected_matches in cases:
+            with self.subTest(prompt=prompt, target_column=target_column):
+                mock_generate_regex.return_value = {
+                    "regex": regex,
+                    "explanation": f"Mocked regex for {prompt}",
+                    "flags": flags,
+                    "confidence": "high",
+                }
+
+                response = self.client.post(
+                    reverse("regex-generate"),
+                    {
+                        "file_id": file_id,
+                        "target_column": target_column,
+                        "natural_language": prompt,
+                    },
+                    format="json",
+                )
+
+                self.assertEqual(response.status_code, status.HTTP_200_OK)
+                payload = response.json()
+                self.assertEqual(payload["regex"], regex)
+                self.assertEqual(payload["target_column"], target_column)
+                self.assertEqual(
+                    payload["match_preview"]["matched_rows"], expected_matches
+                )
+                self.assertGreater(len(payload["match_preview"]["examples"]), 0)
+
+    def _upload_generated_fixture(self, filename):
+        path = FIXTURE_DIR / filename
+        self.assertTrue(path.exists(), f"Generated fixture is missing: {path}")
+        uploaded_file = SimpleUploadedFile(
+            path.name,
+            path.read_bytes(),
+            content_type="text/csv",
+        )
+        response = self.client.post(
+            reverse("file-upload"),
+            {"file": uploaded_file},
+            format="multipart",
+        )
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        return response.json()["file_id"]
+
+@override_settings(MEDIA_ROOT=TEST_MEDIA_ROOT)
 class RegexReplaceApiTests(APITestCase):
     def setUp(self):
         shutil.rmtree(TEST_MEDIA_ROOT, ignore_errors=True)
@@ -484,10 +604,141 @@ class RegexReplaceApiTests(APITestCase):
         self.assertEqual(payload["processed_preview"][1]["Email"], "grace@example.com")
         self.assertEqual(payload["stats"]["matched_rows"], 1)
 
+    def test_generated_fixture_replacement_modifies_only_selected_column(self):
+        file_id = self._upload_generated_fixture("mixed_pii_dataset.csv")
+
+        response = self.client.post(
+            reverse("regex-replace"),
+            {
+                "file_id": file_id,
+                "target_column": "Email",
+                "regex": r"\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b",
+                "flags": ["IGNORECASE"],
+                "replacement": "REDACTED",
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        payload = response.json()
+        self.assertEqual(payload["processed_preview"][0]["Email"], "REDACTED")
+        self.assertEqual(payload["processed_preview"][0]["Phone"], "0412 345 678")
+        self.assertEqual(payload["processed_preview"][0]["Name"], "John Example")
+        self.assertEqual(payload["stats"]["matched_rows"], 4)
+        self.assertEqual(payload["stats"]["total_matches"], 4)
+
+        original_dataframe = pd.read_csv(
+            Path(TEST_MEDIA_ROOT) / "uploads" / f"{file_id}.csv"
+        )
+        self.assertEqual(original_dataframe.loc[0, "Email"], "john.doe@example.com")
+
+    def test_generated_fixture_replacement_matrix_for_supported_data_types(self):
+        cases = [
+            (
+                "Phone",
+                (
+                    r"(?<!\w)(?:\+61\s?4\d{2}\s?\d{3}\s?\d{3}|"
+                    r"\+61\s?[2378]\s?\d{4}\s?\d{4}|"
+                    r"04\d{2}\s?\d{3}\s?\d{3}|"
+                    r"0[2378]\s?\d{4}\s?\d{4}|"
+                    r"\(0[2378]\)\s?\d{4}\s?\d{4})(?!\w)"
+                ),
+                "[PHONE]",
+                5,
+            ),
+            (
+                "Website",
+                r"\b(?:https?://|www\.)[^\s,]+",
+                "[URL]",
+                5,
+            ),
+            (
+                "CardNumber",
+                r"(?<!\d)(?:\d[ -]?){13,19}(?!\d)",
+                "[CARD]",
+                5,
+            ),
+            (
+                "Address",
+                (
+                    r"(?<!\w)(?:Unit\s+\d+/\d+\s+)?\d+\s+[A-Za-z ]+"
+                    r"(?:St|Street|Road|Ave),\s+[A-Za-z ]+\s+[A-Z]{2,3}"
+                    r"\s+\d{4}(?!\w)"
+                ),
+                "[ADDRESS]",
+                4,
+            ),
+        ]
+
+        for target_column, regex, replacement, expected_matches in cases:
+            with self.subTest(target_column=target_column):
+                file_id = self._upload_generated_fixture("mixed_pii_dataset.csv")
+                response = self.client.post(
+                    reverse("regex-replace"),
+                    {
+                        "file_id": file_id,
+                        "target_column": target_column,
+                        "regex": regex,
+                        "flags": ["IGNORECASE"],
+                        "replacement": replacement,
+                    },
+                    format="json",
+                )
+
+                self.assertEqual(response.status_code, status.HTTP_200_OK)
+                payload = response.json()
+                self.assertEqual(payload["stats"]["matched_rows"], expected_matches)
+                self.assertEqual(payload["processed_preview"][0][target_column], replacement)
+                self.assertEqual(
+                    payload["processed_preview"][0]["Email"], "john.doe@example.com"
+                )
+
+    def test_generated_fixture_replacement_replaces_multiple_matches_in_notes_cell(self):
+        file_id = self._upload_generated_fixture("mixed_pii_dataset.csv")
+
+        response = self.client.post(
+            reverse("regex-replace"),
+            {
+                "file_id": file_id,
+                "target_column": "Notes",
+                "regex": (
+                    r"(?:[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}|"
+                    r"04\d{2}\s?\d{3}\s?\d{3})"
+                ),
+                "flags": ["IGNORECASE"],
+                "replacement": "REDACTED",
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        payload = response.json()
+        self.assertEqual(
+            payload["processed_preview"][0]["Notes"],
+            "Contact REDACTED or call REDACTED",
+        )
+        self.assertGreaterEqual(payload["stats"]["total_matches"], 2)
+
     def _upload_csv(self, content: bytes):
         uploaded_file = SimpleUploadedFile(
             "data.csv",
             content,
+            content_type="text/csv",
+        )
+        response = self.client.post(
+            reverse("file-upload"),
+            {"file": uploaded_file},
+            format="multipart",
+        )
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        return response.json()["file_id"]
+
+    def _upload_generated_fixture(self, filename):
+        path = FIXTURE_DIR / filename
+        self.assertTrue(path.exists(), f"Generated fixture is missing: {path}")
+        uploaded_file = SimpleUploadedFile(
+            path.name,
+            path.read_bytes(),
             content_type="text/csv",
         )
         response = self.client.post(

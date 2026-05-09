@@ -1,0 +1,9 @@
+ID,Name,Email,Phone,CardNumber,Website,Address,Notes,InvoiceId,DateText
+M001,John Example,john.doe@example.com,0412 345 678,4111 1111 1111 1111,https://example.com,"123 Collins St, Melbourne VIC 3000",Contact john.doe@example.com or call 0412 345 678,INV-1001,01/05/2026
+M002,Jane Example,jane_smith@domain.com,+61 412 345 678,5555-5555-5555-4444,http://test.org/path,"Unit 5/88 Elizabeth Street, Melbourne VIC 3000","Website: https://example.com, card: 4111 1111 1111 1111",INV-1002,02/05/2026
+M003,Alex Synthetic,user+tag@sub.example.org,03 9123 4567,4000 0000 0000 0002,www.example.net,"42 George Road, Sydney NSW 2000","Address: 123 Collins St, Melbourne VIC 3000",INV-1003,03/05/2026
+M004,Upper Case,UPPER.CASE@EXAMPLE.COM,+61 3 9123 4567,1234 5678 9012 3456,https://sub.domain.com/path?x=1,"9 Queen Ave, Brisbane QLD 4000",No sensitive data here,INV-1004,04/05/2026
+M005,Invalid Email,invalid-email,(03) 9123 4567,0000 0000 0000 0000,not-a-url,No fixed address,Bad phone abc123 and invalid-email,BAD-1005,2026-05-05
+M006,Missing At,missing_at_symbol.com,12345,not-a-card,,invalid address text,Cards 1234 5678 9012 3456 and phone 12345 are invalid,BAD-1006,05-06-2026
+M007,Empty Values,,,,https://example.com/empty,,,INV-1007,07/05/2026
+M008,,,,,,,,,

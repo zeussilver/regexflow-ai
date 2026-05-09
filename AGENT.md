@@ -7,8 +7,10 @@ Phase 6 final delivery is implemented. The application is deployed with:
 - Frontend: `https://frontend-gamma-gold-32.vercel.app`
 - Backend API: `https://regexflow-ai-backend.onrender.com/api`
 - Production branch: `codex/phase6-final-delivery`
-- Latest verified frontend production deployment: `dpl_JVHtXQcHppFT6XnbyFLC25ckyfpr`
-- Latest verified frontend commit: `4f3da89` (`Remove phase labels from frontend`)
+- Latest verified frontend production deployment: `dpl_DueWKuu6sDfyadiQ5j8Mtgo59nwU`
+- Latest verified frontend deployment URL: `https://frontend-hzjs3kyhl-zeussilver1663-2783s-projects.vercel.app`
+- Latest verified frontend commit: `b1e4010` (`docs: update author note`)
+- Latest verified Render backend deploy: `dep-d7vgnpjeo5us73ence90`
 
 The application supports:
 
@@ -66,6 +68,8 @@ Deployment:
 - Vercel build command is `npm run build`.
 - Vercel output directory is `dist`.
 - Vercel production env should set `VITE_API_BASE_URL=https://regexflow-ai-backend.onrender.com/api`.
+- Vercel production env currently has `VITE_API_BASE_URL=https://regexflow-ai-backend.onrender.com/api`.
+- If the production frontend talks to `localhost:8000`, check the Vercel env var and redeploy; Vite bakes env values into the JS bundle at build time.
 - Render backend root is `backend/`.
 - Render start command should run `gunicorn config.wsgi:application --bind 0.0.0.0:$PORT`.
 

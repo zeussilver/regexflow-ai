@@ -17,7 +17,8 @@ RegexFlow AI uses the LLM only to propose regex patterns or bounded transformati
 - Frontend: `https://frontend-gamma-gold-32.vercel.app`
 - Backend API: `https://regexflow-ai-backend.onrender.com/api`
 - Production branch: `codex/phase6-final-delivery`
-- Latest verified frontend deployment: `dpl_JVHtXQcHppFT6XnbyFLC25ckyfpr` at commit `4f3da89` on 2026-05-09
+- Latest verified frontend deployment: `dpl_DueWKuu6sDfyadiQ5j8Mtgo59nwU` at commit `b1e4010` on 2026-05-09
+- Latest frontend deployment URL: `https://frontend-hzjs3kyhl-zeussilver1663-2783s-projects.vercel.app`
 
 The frontend is deployed on Vercel and points to the deployed Render backend. Local setup remains available for development and fallback testing.
 
@@ -495,8 +496,11 @@ Current deployment status:
 - Backend API: `https://regexflow-ai-backend.onrender.com/api`
 - Backend health check: `https://regexflow-ai-backend.onrender.com/api/health/`
 - Production branch: `codex/phase6-final-delivery`
-- Latest verified frontend production deployment: `dpl_JVHtXQcHppFT6XnbyFLC25ckyfpr`
-- Latest verified frontend commit: `4f3da89` (`Remove phase labels from frontend`)
+- Latest verified frontend production deployment: `dpl_DueWKuu6sDfyadiQ5j8Mtgo59nwU`
+- Latest verified frontend deployment URL: `https://frontend-hzjs3kyhl-zeussilver1663-2783s-projects.vercel.app`
+- Latest verified frontend commit: `b1e4010` (`docs: update author note`)
+- Vercel production env: `VITE_API_BASE_URL=https://regexflow-ai-backend.onrender.com/api`
+- Latest verified Render backend deploy: `dep-d7vgnpjeo5us73ence90`
 - Last verified: 2026-05-09
 
 ## Known Limitations
@@ -520,4 +524,4 @@ Current deployment status:
 
 ## Author
 
-RegexFlow AI was prepared and delivery by Zhenqian Liu
+RegexFlow AI was prepared for final delivery by Zhenqian Liu.

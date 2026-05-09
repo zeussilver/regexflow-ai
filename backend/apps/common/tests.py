@@ -7,8 +7,11 @@ from django.test import override_settings
 from django.test import TestCase
 from django.urls import reverse
 from rest_framework import status
+from rest_framework.exceptions import ValidationError
 from rest_framework.test import APIClient
 from rest_framework.test import APITestCase
+
+from apps.common.exception_handlers import structured_exception_handler
 
 
 TEST_MEDIA_ROOT = "/tmp/regexflow-ai-error-shape-test-media"
@@ -234,6 +237,56 @@ class StructuredErrorShapeTests(APITestCase):
                 status.HTTP_400_BAD_REQUEST,
                 "INVALID_TRANSFORMATION_RULE",
             )
+
+    def test_drf_malformed_json_error_shape(self):
+        response = self.client.generic(
+            "POST",
+            reverse("regex-generate"),
+            data=b'{"file_id":',
+            content_type="application/json",
+        )
+
+        self.assert_error_shape(response, status.HTTP_400_BAD_REQUEST, "PARSE_ERROR")
+
+    def test_drf_method_not_allowed_error_shape(self):
+        response = self.client.get(reverse("regex-generate"))
+
+        self.assert_error_shape(
+            response,
+            status.HTTP_405_METHOD_NOT_ALLOWED,
+            "METHOD_NOT_ALLOWED",
+        )
+
+    def test_drf_unsupported_media_type_error_shape(self):
+        response = self.client.generic(
+            "POST",
+            reverse("regex-generate"),
+            data="<root />",
+            content_type="application/xml",
+        )
+
+        self.assert_error_shape(
+            response,
+            status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+            "UNSUPPORTED_MEDIA_TYPE",
+        )
+
+    def test_drf_validation_error_shape(self):
+        response = structured_exception_handler(
+            ValidationError({"field": ["Invalid value."]}),
+            {},
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            response.data,
+            {
+                "error": {
+                    "code": "VALIDATION_ERROR",
+                    "message": "The request could not be validated.",
+                }
+            },
+        )
 
     def assert_error_shape(self, response, expected_status, expected_code):
         self.assertEqual(response.status_code, expected_status)

@@ -17,10 +17,8 @@ RegexFlow AI uses the LLM only to propose regex patterns or bounded transformati
 - Frontend: `https://frontend-gamma-gold-32.vercel.app`
 - Backend API: `https://regexflow-ai-backend.onrender.com/api`
 - Production branch: `codex/phase6-final-delivery`
-- Latest verified frontend deployment: `dpl_DueWKuu6sDfyadiQ5j8Mtgo59nwU` at commit `b1e4010` on 2026-05-09
-- Latest frontend deployment URL: `https://frontend-hzjs3kyhl-zeussilver1663-2783s-projects.vercel.app`
 
-The frontend is deployed on Vercel and points to the deployed Render backend. Local setup remains available for development and fallback testing.
+The public frontend URL is configured to call the Render backend API. Local setup remains available for development and fallback testing.
 
 ## Demo Video
 
@@ -490,17 +488,19 @@ Deployment-specific values to configure:
 - LLM provider credentials and model values.
 - Persistent storage strategy for uploaded and processed files.
 
-Current deployment status:
+Last-verified deployment status:
 
-- Frontend: `https://frontend-gamma-gold-32.vercel.app`
+This records the deployment state last checked on 2026-05-09. It does not prove that current local or uncommitted changes are deployed; redeploy and reverify after code or configuration changes.
+
+- Frontend production URL: `https://frontend-gamma-gold-32.vercel.app`
 - Backend API: `https://regexflow-ai-backend.onrender.com/api`
 - Backend health check: `https://regexflow-ai-backend.onrender.com/api/health/`
 - Production branch: `codex/phase6-final-delivery`
-- Latest verified frontend production deployment: `dpl_DueWKuu6sDfyadiQ5j8Mtgo59nwU`
-- Latest verified frontend deployment URL: `https://frontend-hzjs3kyhl-zeussilver1663-2783s-projects.vercel.app`
-- Latest verified frontend commit: `b1e4010` (`docs: update author note`)
-- Vercel production env: `VITE_API_BASE_URL=https://regexflow-ai-backend.onrender.com/api`
-- Latest verified Render backend deploy: `dep-d7vgnpjeo5us73ence90`
+- Verified frontend production deployment: `dpl_DueWKuu6sDfyadiQ5j8Mtgo59nwU`
+- Verified frontend deployment URL: `https://frontend-hzjs3kyhl-zeussilver1663-2783s-projects.vercel.app`
+- Verified frontend commit: `b1e4010` (`docs: update author note`)
+- Verified Vercel production env: `VITE_API_BASE_URL=https://regexflow-ai-backend.onrender.com/api`
+- Verified Render backend deploy: `dep-d7vgnpjeo5us73ence90`
 - Last verified: 2026-05-09
 
 ## Known Limitations

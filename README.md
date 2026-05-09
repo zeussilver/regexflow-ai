@@ -16,6 +16,8 @@ RegexFlow AI uses the LLM only to propose regex patterns or bounded transformati
 - Source code: `https://github.com/zeussilver/regexflow-ai/tree/codex/phase6-final-delivery`
 - Frontend: `https://frontend-gamma-gold-32.vercel.app`
 - Backend API: `https://regexflow-ai-backend.onrender.com/api`
+- Production branch: `codex/phase6-final-delivery`
+- Latest verified frontend deployment: `dpl_JVHtXQcHppFT6XnbyFLC25ckyfpr` at commit `4f3da89` on 2026-05-09
 
 The frontend is deployed on Vercel and points to the deployed Render backend. Local setup remains available for development and fallback testing.
 
@@ -36,6 +38,7 @@ Do not replace the placeholder with a public URL unless the final video has been
 - Deterministic regex replacement against one selected column.
 - Processed table preview and replacement statistics.
 - Processed CSV persistence under backend media storage.
+- Processed CSV download for regex replacement and optional transformation results.
 - Optional PII redaction across selected columns or all text-like columns.
 - Optional phone normalization using `phonenumbers` and a configurable default region.
 - Structured API errors for frontend-friendly validation and failure messages.
@@ -105,6 +108,8 @@ regexflow-ai/
 │   └── sample_phone_normalization.csv
 ├── docs/
 │   ├── manual-test-checklist.md
+│   ├── user-operation-manual.md
+│   ├── QA_TEST_REPORT.md
 │   └── demo-video-script.md
 ├── docker-compose.yml
 └── README.md
@@ -121,6 +126,8 @@ Use the files in `samples/` for local testing and demo recording:
 | `samples/sample_phone_normalization.csv` | Phone normalization demo using Australian numbers and one invalid value. |
 
 The upload API also supports `.xlsx` files, but the committed sample datasets are CSV files.
+
+For step-by-step tester instructions, see `docs/user-operation-manual.md`.
 
 ## Local Setup
 
@@ -209,6 +216,7 @@ All API error responses use this shape:
 | --- | --- | --- |
 | `GET` | `/api/health/` | Returns service health. |
 | `POST` | `/api/files/upload/` | Uploads a CSV or XLSX file and returns columns plus preview rows. |
+| `GET` | `/api/files/processed/<processed_file_id>/download/` | Downloads a processed CSV file created by replacement or transformation flows. |
 | `POST` | `/api/regex/generate/` | Generates and validates a regex from natural language for one column. |
 | `POST` | `/api/regex/replace/` | Applies a validated regex replacement to one column and returns processed preview and stats. |
 | `POST` | `/api/transformations/pii-redact/` | Applies practical PII redaction using a bounded LLM-generated policy and backend redaction logic. |
@@ -255,6 +263,12 @@ Successful response:
   ]
 }
 ```
+
+### Processed File Download
+
+`GET /api/files/processed/<processed_file_id>/download/`
+
+Returns a `text/csv` attachment for a processed file created by regex replacement, PII redaction, or phone normalization. Missing or invalid IDs return the standard API error shape.
 
 ### Regex Generation
 
@@ -479,6 +493,11 @@ Current deployment status:
 
 - Frontend: `https://frontend-gamma-gold-32.vercel.app`
 - Backend API: `https://regexflow-ai-backend.onrender.com/api`
+- Backend health check: `https://regexflow-ai-backend.onrender.com/api/health/`
+- Production branch: `codex/phase6-final-delivery`
+- Latest verified frontend production deployment: `dpl_JVHtXQcHppFT6XnbyFLC25ckyfpr`
+- Latest verified frontend commit: `4f3da89` (`Remove phase labels from frontend`)
+- Last verified: 2026-05-09
 
 ## Known Limitations
 

@@ -18,7 +18,7 @@ export default function TransformationModeTabs({
     <section className="transformation-tabs-panel">
       <div className="transformation-tabs-header">
         <div>
-          <h2>Optional Transformations</h2>
+          <h2>Transformations</h2>
         </div>
       </div>
 

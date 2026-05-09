@@ -34,6 +34,7 @@ export default function PhoneNormalizationPanel({
   onTargetFormatChange,
 }: PhoneNormalizationPanelProps) {
   const isDisabled = !hasUploadedFile || isLoading;
+  const normalizeState = isLoading ? "loading" : hasUploadedFile ? "ready" : "locked";
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -47,7 +48,6 @@ export default function PhoneNormalizationPanel({
           <p className="eyebrow">Phone Normalization</p>
           <h2>Normalize Phone Numbers</h2>
         </div>
-        <span className="phase-badge">Optional</span>
       </div>
 
       <form className="transformation-form phone-form" onSubmit={handleSubmit}>
@@ -108,8 +108,9 @@ export default function PhoneNormalizationPanel({
         </label>
 
         <button
-          className="transformation-button phone-normalize-button"
+          className="transformation-button phone-normalize-button action-button"
           type="submit"
+          data-action-state={normalizeState}
           disabled={!hasUploadedFile || isLoading}
         >
           {isLoading ? "Normalizing" : "Normalize"}

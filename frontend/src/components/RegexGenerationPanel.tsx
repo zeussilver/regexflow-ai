@@ -21,6 +21,8 @@ export default function RegexGenerationPanel({
   onNaturalLanguageChange,
   onTargetColumnChange,
 }: RegexGenerationPanelProps) {
+  const generateState = isGenerating ? "loading" : hasUploadedFile ? "ready" : "locked";
+
   return (
     <section className="regex-panel">
       <div className="regex-panel-header">
@@ -49,8 +51,9 @@ export default function RegexGenerationPanel({
         </label>
 
         <button
-          className="generate-button"
+          className="generate-button action-button"
           type="button"
+          data-action-state={generateState}
           disabled={!hasUploadedFile || isGenerating}
           onClick={onGenerate}
         >

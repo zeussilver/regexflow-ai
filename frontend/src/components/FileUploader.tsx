@@ -12,6 +12,7 @@ export default function FileUploader({
   onClientError,
 }: FileUploaderProps) {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const uploadState = isUploading ? "loading" : selectedFile ? "ready" : "locked";
 
   function handleFileChange(event: ChangeEvent<HTMLInputElement>) {
     const nextFile = event.target.files?.[0] ?? null;
@@ -52,7 +53,12 @@ export default function FileUploader({
           onChange={handleFileChange}
           disabled={isUploading}
         />
-        <button type="submit" disabled={isUploading}>
+        <button
+          className="action-button"
+          type="submit"
+          data-action-state={uploadState}
+          disabled={!selectedFile || isUploading}
+        >
           {isUploading ? "Uploading" : "Upload"}
         </button>
       </div>

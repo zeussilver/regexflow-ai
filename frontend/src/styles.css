@@ -1,4 +1,9 @@
 :root {
+  --action-ready-bg: #0b7b75;
+  --action-ready-bg-hover: #095f5b;
+  --action-locked-bg: #cfe4ff;
+  --action-locked-text: #314760;
+  --action-loading-bg: #203f91;
   color: #17201b;
   background: #eef0e7;
   font-family:
@@ -155,8 +160,32 @@ button:hover:not(:disabled) {
 }
 
 button:disabled {
+  cursor: not-allowed;
+  opacity: 0.72;
+}
+
+.action-button {
+  background: var(--action-ready-bg);
+  color: #ffffff;
+}
+
+.action-button:hover:not(:disabled) {
+  background: var(--action-ready-bg-hover);
+}
+
+.action-button:disabled {
+  opacity: 1;
+}
+
+.action-button[data-action-state="locked"] {
+  background: var(--action-locked-bg);
+  color: var(--action-locked-text);
+}
+
+.action-button[data-action-state="loading"] {
+  background: var(--action-loading-bg);
+  color: #ffffff;
   cursor: wait;
-  opacity: 0.68;
 }
 
 .error-message {
@@ -275,11 +304,6 @@ textarea:disabled,
 .generate-button {
   min-width: 160px;
   min-height: 92px;
-  background: #203f91;
-}
-
-.generate-button:hover:not(:disabled) {
-  background: #182f70;
 }
 
 .generate-button:disabled {
@@ -465,13 +489,18 @@ textarea:disabled,
 .transformation-tab {
   min-width: 220px;
   min-height: 54px;
-  background: #ffffff;
-  color: #17201b;
+  background: var(--action-ready-bg);
+  color: #ffffff;
+}
+
+.transformation-tab:hover:not(:disabled) {
+  background: var(--action-ready-bg-hover);
 }
 
 .transformation-tab.active {
-  background: #203f91;
+  background: var(--action-ready-bg);
   color: #ffffff;
+  box-shadow: inset 0 -6px 0 rgba(255, 255, 255, 0.32);
 }
 
 .transformation-form {
@@ -544,11 +573,6 @@ textarea:disabled,
 .transformation-button {
   min-width: 176px;
   min-height: 54px;
-  background: #8f2b16;
-}
-
-.transformation-button:hover:not(:disabled) {
-  background: #6d2111;
 }
 
 .transformation-button:disabled {

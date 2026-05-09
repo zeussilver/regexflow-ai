@@ -40,6 +40,7 @@ export default function PiiRedactionPanel({
   onTargetColumnsChange,
 }: PiiRedactionPanelProps) {
   const isDisabled = !hasUploadedFile || isLoading;
+  const applyState = isLoading ? "loading" : hasUploadedFile ? "ready" : "locked";
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -69,7 +70,6 @@ export default function PiiRedactionPanel({
           <p className="eyebrow">PII Redaction Assistant</p>
           <h2>Redact Sensitive Values</h2>
         </div>
-        <span className="phase-badge">Optional</span>
       </div>
 
       <form className="transformation-form pii-form" onSubmit={handleSubmit}>
@@ -125,8 +125,9 @@ export default function PiiRedactionPanel({
           </label>
 
           <button
-            className="transformation-button"
+            className="transformation-button action-button"
             type="submit"
+            data-action-state={applyState}
             disabled={!hasUploadedFile || isLoading}
           >
             {isLoading ? "Applying" : "Apply Redaction"}

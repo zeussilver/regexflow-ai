@@ -15,7 +15,7 @@ URL_PATTERN = re.compile(
     re.IGNORECASE,
 )
 CREDIT_CARD_CANDIDATE_PATTERN = re.compile(
-    r"(?<!\d)(?:\d[ -]?){13,19}(?!\d)"
+    r"(?<!\d)\d(?:[ -]?\d){12,18}(?!\d)"
 )
 PHONE_CANDIDATE_PATTERN = re.compile(
     r"(?<![\w])(?:\+?\d[\d\s().-]{6,}\d)(?![\w])"

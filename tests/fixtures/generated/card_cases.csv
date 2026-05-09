@@ -1,0 +1,9 @@
+ID,CardNumber,LuhnValid,Notes
+C001,4111 1111 1111 1111,yes,fake test Visa-like number
+C002,5555-5555-5555-4444,yes,fake test Mastercard-like number
+C003,4000 0000 0000 0002,yes,fake test card-like number
+C004,1234 5678 9012 3456,no,Luhn-invalid sequence
+C005,0000 0000 0000 0000,yes,synthetic all-zero Luhn-valid edge case
+C006,not-a-card,no,plain text
+C007,,no,empty string
+C008,,no,null cell

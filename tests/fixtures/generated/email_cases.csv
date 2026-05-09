@@ -1,0 +1,11 @@
+ID,Email,ExpectedValid,Notes
+E001,john.doe@example.com,yes,standard lowercase email
+E002,jane_smith@domain.com,yes,underscore local part
+E003,user+tag@sub.example.org,yes,tag and subdomain
+E004,UPPER.CASE@EXAMPLE.COM,yes,uppercase address
+E005,invalid-email,no,missing domain
+E006,missing_at_symbol.com,no,missing at sign
+E007, leading@example.com ,yes,leading and trailing spaces
+E008,,no,empty string
+E009,,no,null cell
+E010,john.doe@example.com,yes,duplicate value

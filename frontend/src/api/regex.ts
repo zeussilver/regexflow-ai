@@ -1,5 +1,6 @@
 import axios from "axios";
 
+import { apiClient } from "./client";
 import {
   RegexApiError,
   RegexApiErrorPayload,
@@ -8,10 +9,6 @@ import {
   RegexReplaceRequest,
   RegexReplaceResponse,
 } from "../types/regex";
-
-const apiClient = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000/api",
-});
 
 export async function generateRegex(
   payload: RegexGenerateRequest,
@@ -23,7 +20,7 @@ export async function generateRegex(
     throw toRegexApiError(
       error,
       "REGEX_GENERATION_FAILED",
-      "The regex could not be generated. Check that Django is running and the LLM is configured.",
+      "The regex could not be generated. The backend API is unavailable; check the configured API URL and try again.",
     );
   }
 }
@@ -38,7 +35,7 @@ export async function applyReplacement(
     throw toRegexApiError(
       error,
       "REGEX_REPLACEMENT_FAILED",
-      "The replacement could not be applied. Check that Django is running and try again.",
+      "The replacement could not be applied. The backend API is unavailable; check the configured API URL and try again.",
     );
   }
 }

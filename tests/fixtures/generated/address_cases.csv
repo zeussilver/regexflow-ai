@@ -1,0 +1,9 @@
+ID,Address,ExpectedAddressLike,Notes
+A001,"123 Collins St, Melbourne VIC 3000",yes,street abbreviation
+A002,"Unit 5/88 Elizabeth Street, Melbourne VIC 3000",yes,unit address
+A003,"42 George Road, Sydney NSW 2000",yes,road address
+A004,"9 Queen Ave, Brisbane QLD 4000",yes,avenue address
+A005,No fixed address,no,negative control
+A006,invalid address text,no,invalid text
+A007,,no,empty string
+A008,,no,null cell

@@ -33,7 +33,6 @@ export default function FileUploader({
   return (
     <form className="upload-panel" onSubmit={handleSubmit}>
       <div className="upload-copy">
-        <p className="eyebrow">Phase 1 + 2</p>
         <h1>RegexFlow AI</h1>
       </div>
 

@@ -18,7 +18,6 @@ export default function TransformationModeTabs({
     <section className="transformation-tabs-panel">
       <div className="transformation-tabs-header">
         <div>
-          <p className="eyebrow">Phase 5</p>
           <h2>Optional Transformations</h2>
         </div>
       </div>

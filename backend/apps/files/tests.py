@@ -1,4 +1,5 @@
 from io import BytesIO
+from pathlib import Path
 import shutil
 
 import pandas as pd
@@ -12,6 +13,16 @@ from .services import save_processed_dataframe
 
 
 TEST_MEDIA_ROOT = "/tmp/regexflow-ai-test-media"
+FIXTURE_DIR = Path(__file__).resolve().parents[3] / "tests" / "fixtures" / "generated"
+GENERATED_FIXTURE_ROW_COUNTS = {
+    "mixed_pii_dataset": 8,
+    "email_cases": 10,
+    "phone_cases": 9,
+    "card_cases": 8,
+    "address_cases": 8,
+    "edge_cases": 11,
+    "medium_mixed_dataset": 600,
+}
 
 
 @override_settings(MEDIA_ROOT=TEST_MEDIA_ROOT)
@@ -71,6 +82,38 @@ class FileUploadApiTests(APITestCase):
         self.assertEqual(payload["columns"], ["name", "email"])
         self.assertEqual(payload["row_count"], 2)
         self.assertEqual(payload["preview_rows"][1]["name"], "Grace")
+
+    def test_generated_fixture_upload_matrix_csv_and_xlsx(self):
+        for fixture_name, expected_row_count in GENERATED_FIXTURE_ROW_COUNTS.items():
+            for extension in ("csv", "xlsx"):
+                with self.subTest(fixture=fixture_name, extension=extension):
+                    response = self._upload_generated_fixture(
+                        f"{fixture_name}.{extension}"
+                    )
+
+                    self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+                    payload = response.json()
+                    self.assertEqual(payload["filename"], f"{fixture_name}.{extension}")
+                    self.assertEqual(payload["row_count"], expected_row_count)
+                    self.assertGreater(len(payload["columns"]), 0)
+                    self.assertEqual(
+                        len(payload["preview_rows"]),
+                        min(expected_row_count, 50),
+                    )
+
+    def test_generated_edge_fixture_null_values_are_json_safe(self):
+        for extension in ("csv", "xlsx"):
+            with self.subTest(extension=extension):
+                response = self._upload_generated_fixture(f"edge_cases.{extension}")
+
+                self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+                payload = response.json()
+                null_row = next(
+                    row for row in payload["preview_rows"] if row["ID"] == "EDGE-011"
+                )
+                self.assertIsNone(null_row["Email"])
+                self.assertIsNone(null_row["Phone"])
+                self.assertIsNone(null_row["Notes"])
 
     def test_missing_file_returns_structured_error(self):
         response = self.client.post(reverse("file-upload"), {}, format="multipart")
@@ -144,3 +187,22 @@ class FileUploadApiTests(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertEqual(response.json()["error"]["code"], "FILE_NOT_FOUND")
+
+    def _upload_generated_fixture(self, filename):
+        path = FIXTURE_DIR / filename
+        self.assertTrue(path.exists(), f"Generated fixture is missing: {path}")
+        content_type = (
+            "text/csv"
+            if path.suffix == ".csv"
+            else "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
+        uploaded_file = SimpleUploadedFile(
+            path.name,
+            path.read_bytes(),
+            content_type=content_type,
+        )
+        return self.client.post(
+            reverse("file-upload"),
+            {"file": uploaded_file},
+            format="multipart",
+        )

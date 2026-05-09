@@ -22,7 +22,6 @@ export default function ReplacementPanel({
     <section className="replacement-panel">
       <div className="replacement-panel-header">
         <div>
-          <p className="eyebrow">Phase 4</p>
           <h2>Apply Replacement</h2>
         </div>
         <span className="phase-badge">Regex Ready</span>

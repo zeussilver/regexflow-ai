@@ -25,10 +25,8 @@ export default function RegexGenerationPanel({
     <section className="regex-panel">
       <div className="regex-panel-header">
         <div>
-          <p className="eyebrow">Phase 3</p>
           <h2>Generate Regex</h2>
         </div>
-        <span className="phase-badge">Replacement in Phase 4</span>
       </div>
 
       <div className="regex-form">

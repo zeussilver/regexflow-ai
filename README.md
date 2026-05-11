@@ -461,13 +461,13 @@ Recommended backend deployment settings for Render or Railway:
 ```text
 Root directory: backend
 Build command: pip install -r requirements.txt && python manage.py migrate && python manage.py collectstatic --noinput
-Start command: gunicorn config.wsgi:application --bind 0.0.0.0:$PORT
+Start command: gunicorn config.wsgi:application --bind 0.0.0.0:$PORT --timeout 90
 ```
 
 If the platform does not expose `$PORT`, use:
 
 ```text
-gunicorn config.wsgi:application --bind 0.0.0.0:8000
+gunicorn config.wsgi:application --bind 0.0.0.0:8000 --timeout 90
 ```
 
 Recommended frontend deployment settings for Vercel:

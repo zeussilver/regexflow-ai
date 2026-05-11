@@ -23,11 +23,18 @@ class RegexGenerateView(APIView):
 
         try:
             dataframe = match_preview.load_uploaded_dataframe(file_id)
+            contextual_result = match_preview.resolve_contextual_target_regex(
+                dataframe=dataframe,
+                target_column=target_column,
+                natural_language=natural_language,
+            )
             sample_values = match_preview.get_column_sample_values(dataframe, target_column)
-            llm_result = llm_service.generate_regex(
+            sample_rows = match_preview.get_row_sample_context(dataframe)
+            llm_result = contextual_result or llm_service.generate_regex(
                 natural_language=natural_language,
                 target_column=target_column,
                 sample_values=sample_values,
+                sample_rows=sample_rows,
             )
             if not isinstance(llm_result, dict):
                 raise llm_service.LLMServiceError(

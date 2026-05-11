@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 import json
 import os
-from typing import Any
+from typing import Any, Optional
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
@@ -29,6 +29,7 @@ def generate_regex(
     natural_language: str,
     target_column: str,
     sample_values: list[str],
+    sample_rows: Optional[list[dict[str, str]]] = None,
 ) -> dict[str, Any]:
     provider = os.getenv("LLM_PROVIDER", "openai_compatible").strip()
     if provider != "openai_compatible":
@@ -60,6 +61,7 @@ def generate_regex(
         natural_language=natural_language,
         target_column=target_column,
         sample_values=sample_values,
+        sample_rows=sample_rows or [],
     )
     return parse_llm_json(raw_content)
 
@@ -108,6 +110,7 @@ def _call_openai_compatible(
     natural_language: str,
     target_column: str,
     sample_values: list[str],
+    sample_rows: list[dict[str, str]],
 ) -> str:
     timeout = _timeout_seconds()
     payload = {
@@ -120,6 +123,7 @@ def _call_openai_compatible(
                     natural_language=natural_language,
                     target_column=target_column,
                     sample_values=sample_values,
+                    sample_rows=sample_rows,
                 ),
             },
         ],
@@ -196,6 +200,7 @@ Rules:
 - The regex must be compatible with Python's re module.
 - Do not include leading and trailing slash delimiters.
 - Prefer safe and readable regex.
+- If the user asks for a target value that belongs to a named person, account, company, or other row-level entity, use the row samples to identify the matching row and return a regex that matches only that target-column value.
 - Avoid catastrophic backtracking patterns.
 - If the request is ambiguous, still provide the best reasonable regex and set confidence to "low".
 - Do not perform replacement."""
@@ -206,6 +211,7 @@ def _user_prompt(
     natural_language: str,
     target_column: str,
     sample_values: list[str],
+    sample_rows: list[dict[str, str]],
 ) -> str:
     sample_lines = "\n".join(
         f"{index}. {value}" for index, value in enumerate(sample_values, start=1)
@@ -213,10 +219,20 @@ def _user_prompt(
     if not sample_lines:
         sample_lines = "No non-empty sample values were available."
 
+    row_lines = "\n".join(
+        f"{index}. {json.dumps(row, ensure_ascii=True)}"
+        for index, row in enumerate(sample_rows, start=1)
+    )
+    if not row_lines:
+        row_lines = "No row samples were available."
+
     return f"""Target column: {target_column}
 
-Sample values:
+Target-column sample values:
 {sample_lines}
+
+Row samples:
+{row_lines}
 
 User description:
 {natural_language}"""

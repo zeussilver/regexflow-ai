@@ -1,6 +1,7 @@
 import json
 import os
 from pathlib import Path
+import re
 import shutil
 from unittest.mock import patch
 
@@ -53,6 +54,66 @@ class RegexGenerateApiTests(APITestCase):
         self.assertEqual(payload["match_preview"]["checked_rows"], 3)
         self.assertGreater(payload["match_preview"]["matched_rows"], 0)
         self.assertEqual(payload["match_preview"]["examples"][0]["row_index"], 0)
+        self.assertIn("sample_rows", mock_generate_regex.call_args.kwargs)
+        self.assertEqual(
+            mock_generate_regex.call_args.kwargs["sample_rows"][0]["Name"],
+            "Ada",
+        )
+
+    @patch("apps.regex_engine.llm_service.generate_regex")
+    def test_person_card_lookup_returns_exact_target_value(self, mock_generate_regex):
+        file_id = self._upload_customer_lookup_csv()
+
+        response = self.client.post(
+            reverse("regex-generate"),
+            {
+                "file_id": file_id,
+                "target_column": "Card",
+                "natural_language": "what is Alice Brown's card number",
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        payload = response.json()
+        self.assertEqual(
+            payload["regex"],
+            re.escape("4111 1111 1111 1111").replace(r"\ ", " "),
+        )
+        self.assertEqual(payload["match_preview"]["checked_rows"], 4)
+        self.assertEqual(payload["match_preview"]["matched_rows"], 1)
+        self.assertEqual(payload["match_preview"]["examples"][0]["row_index"], 0)
+        self.assertEqual(
+            payload["match_preview"]["examples"][0]["matches"],
+            ["4111 1111 1111 1111"],
+        )
+        mock_generate_regex.assert_not_called()
+
+    @patch("apps.regex_engine.llm_service.generate_regex")
+    def test_person_website_lookup_returns_exact_target_value(self, mock_generate_regex):
+        file_id = self._upload_customer_lookup_csv()
+
+        response = self.client.post(
+            reverse("regex-generate"),
+            {
+                "file_id": file_id,
+                "target_column": "Website",
+                "natural_language": "what is Jane Smith's website",
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        payload = response.json()
+        self.assertEqual(payload["regex"], re.escape("www.website.org"))
+        self.assertEqual(payload["match_preview"]["checked_rows"], 4)
+        self.assertEqual(payload["match_preview"]["matched_rows"], 1)
+        self.assertEqual(payload["match_preview"]["examples"][0]["row_index"], 1)
+        self.assertEqual(
+            payload["match_preview"]["examples"][0]["matches"],
+            ["www.website.org"],
+        )
+        mock_generate_regex.assert_not_called()
 
     def test_regex_generation_reliability_prompt_set(self):
         file_id = self._upload_pattern_samples_csv()
@@ -273,6 +334,26 @@ class RegexGenerateApiTests(APITestCase):
                 b"$123.45\n"
                 b"[internal note]\n"
                 b"3000\n"
+            ),
+            content_type="text/csv",
+        )
+        response = self.client.post(
+            reverse("file-upload"),
+            {"file": uploaded_file},
+            format="multipart",
+        )
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        return response.json()["file_id"]
+
+    def _upload_customer_lookup_csv(self):
+        uploaded_file = SimpleUploadedFile(
+            "customers.csv",
+            (
+                b"Name,Card,Website\n"
+                b"Alice Brown,4111 1111 1111 1111,https://example.com\n"
+                b"Jane Smith,5555 5555 5555 4444,www.website.org\n"
+                b"Chris Green,,https://portal.example.net\n"
+                b"Pat Lee,4000 0000 0000 0002,\n"
             ),
             content_type="text/csv",
         )

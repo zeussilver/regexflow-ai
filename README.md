@@ -20,12 +20,24 @@ RegexFlow AI uses the LLM only to propose regex patterns or bounded transformati
 
 The public frontend URL is configured to call the Render backend API. Local setup remains available for development and fallback testing.
 
-## Demo Video
+## Demo Videos
 
-- Demo video: `TODO: <DEMO_VIDEO_URL>`
-- Recording guide: `docs/demo-video-script.md`
+Recommended viewing order: Regex pattern matching and replacement -> PII Redaction Assistant -> Phone Normalization.
 
-Do not replace the placeholder with a public URL unless the final video has been uploaded and verified.
+### Regex Pattern Matching and Replacement
+
+[![Watch the Regex pattern matching and replacement demo](docs/assets/regexflow-demo-thumbnail.jpg)](docs/assets/regexflow-demo.mp4)
+
+### PII Redaction Assistant
+
+[![Watch the PII redaction demo](docs/assets/regexflow-pii-demo-thumbnail.jpg)](docs/assets/regexflow-pii-demo.mp4)
+
+### Phone Normalization
+
+[![Watch the phone normalization demo](docs/assets/regexflow-phone-demo-thumbnail.jpg)](docs/assets/regexflow-phone-demo.mp4)
+
+- Demo videos: [`regex`](docs/assets/regexflow-demo.mp4), [`PII redaction`](docs/assets/regexflow-pii-demo.mp4), [`phone normalization`](docs/assets/regexflow-phone-demo.mp4)
+- Operation guide: [`docs/user-operation-manual.md`](docs/user-operation-manual.md)
 
 ## Features
 
@@ -106,6 +118,7 @@ regexflow-ai/
 │   ├── sample_pii_redaction.csv
 │   └── sample_phone_normalization.csv
 ├── docs/
+│   ├── assets/
 │   ├── manual-test-checklist.md
 │   ├── user-operation-manual.md
 │   ├── QA_TEST_REPORT.md

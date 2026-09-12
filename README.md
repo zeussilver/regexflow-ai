@@ -576,3 +576,65 @@ Generating regex may send selected-column samples and up to 10 rows and 12
 columns of context to an external model. Redacting the output does not prevent
 input disclosure. Public demos must use synthetic data. This is an unauthenticated
 shared demo, without user isolation or compliance-grade PII detection.
+
+## Saved phone normalization rules
+
+Before starting a checkout containing saved rules, install backend requirements
+and apply the additive migration to your intended database:
+
+```bash
+cd backend
+.venv/bin/python manage.py migrate
+```
+
+This adds rule groups, immutable phone rule versions, and execution metadata;
+existing uploads and transformations are unchanged. It uses the existing SQLite
+fallback or configured `DATABASE_URL`. The automated tests use a separate database;
+they do not migrate your normal demo database. For a persistent demo, both the
+database and media directory need persistent storage. No deployment is automatic.
+
+1. Upload **synthetic** phone data, choose Phone Normalization, and normalize one
+   column. This initial generation still contacts the configured model.
+2. Under Saved phone rules, name and save the returned validated rule. Only its
+   name, single target column, region, format and invalid-value setting are saved.
+3. Refresh or upload another CSV/XLSX with the same target column. Other columns
+   may differ. Choose a saved version and click Preview saved rule.
+4. Review the first 50 before/after rows and statistics calculated over the entire
+   file, then Confirm and execute. Download CSV after the execution succeeds.
+5. Expand Create a new immutable version to adjust parameters. Save new version
+   adds the next version in the same group; previous versions remain available.
+
+Selecting a different file or version clears confirmation and prior rule output.
+Preview creates no processed file. Confirmation is signed over the file ID,
+SHA-256 content digest and version ID, and expires after 15 minutes. Expired,
+tampered or mismatched confirmations require a fresh preview; changed or missing
+files fail with a controlled execution record. A valid confirmation can be
+executed again within its lifetime; each execution produces its own record/output.
+The confirmation is an integrity check, not an authentication or approval system.
+
+Saved-rule preview and execution directly call the existing `phonenumbers`
+processor, with **zero model calls**. A transactional group counter and database
+unique constraint allocate version numbers. Concurrent database contention can
+return `VERSION_CONFLICT` (409); retry the save. Existing versions have no update,
+delete or rollback API.
+
+| Endpoint | Request / result |
+| --- | --- |
+| `GET /api/rules/` | `{rules: [...]}` with all saved versions |
+| `POST /api/rules/` | `name`, `target_column`, optional `default_region` (AU), `target_format` (E164), `preserve_invalid` (true) |
+| `POST /api/rules/{version_id}/versions/` | Same parameters; creates next version in that group |
+| `POST /api/rules/{version_id}/preview/` | `file_id`; before/after preview, full statistics, `changed_rows`, `confirmation_token` |
+| `POST /api/rules/{version_id}/execute/` | `confirmation_token`; existing transformation/download fields plus `execution` |
+| `GET /api/rule-executions/?rule_id={group_id}` | Most recent 20 execution metadata records |
+
+Execution metadata contains IDs, status, actual changed-row count, timestamps and
+a controlled error code; it contains no phone values, original rows or exception
+text. Clearing invalid values counts as a change. Counts are null for unfinished
+or failed runs. `running` is written before processing, `succeeded` only after
+output save, and `failed` on caught errors. A killed process may leave `running`
+and an unreferenced output; no background recovery is implemented.
+
+Rules and history are shared in this **unauthenticated demo**. There is no tenant
+isolation, compliance-grade PII detection, approval workflow, deletion, rollback,
+or scheduler. Names and column names are user-supplied metadata: do not put real
+personal data in them. See [versioned-rule QA](docs/QA_VERSIONED_PHONE_RULES.md).

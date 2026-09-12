@@ -42,7 +42,7 @@ export default function PhoneNormalizationPanel({
   }
 
   return (
-    <section className="phone-panel">
+    <section className="phone-panel" aria-label="Phone normalization">
       <div className="transformation-panel-header">
         <div>
           <p className="eyebrow">Phone Normalization</p>

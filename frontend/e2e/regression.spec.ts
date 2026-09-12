@@ -44,8 +44,9 @@ test('upload, original preview, model rule, replacement and exact CSV download',
   expect((await (await request.get('http://127.0.0.1:8766/state')).json()).calls).toBe(1);
 });
 for (const [name, data, error] of [['empty.csv', '', 'The uploaded file is empty.'], ['unsupported.txt', 'hello', 'Only CSV and XLSX files are supported.']]) {
-  test(`invalid upload clears a previous success: ${name}`, async ({ page }) => {
+  test(`invalid upload clears a previous success: ${name}`, async ({ page, request }) => {
     await upload(page); await generate(page); await replace(page);
+    expect((await (await request.get('http://127.0.0.1:8766/state')).json()).calls).toBe(1);
     const result = await upload(page, data, name);
     expect(result.error.message).toBe(error);
     await expect(page.getByText(error, { exact: true })).toBeVisible();

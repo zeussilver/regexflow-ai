@@ -8,6 +8,8 @@ remain unchanged. This is an author/Codex self-review, not a colleague review.
 Use the exact commands in README, Automated regression checks. CI uses Python
 3.11 and Node 22; local verification currently uses Python 3.11.14 and Node 22.23.0.
 The final PR description records its head commit and corresponding Actions URL.
+Initial full Actions pass: https://github.com/zeussilver/regexflow-ai/actions/runs/34700091648
+Final self-review also added explicit model-call assertions to both invalid-upload cases.
 
 | Requirement | Evidence | Status |
 | --- | --- | --- |
@@ -17,7 +19,7 @@ The final PR description records its head commit and corresponding Actions URL.
 | Invalid JSON/regex and HTTP 503, retry | Three browser cases | Passed locally |
 | 63 rows, only target changes, original bytes intact, repeat | Parsed CSV comparison + server file bytes | Passed locally |
 | TypeScript/build | Runner builds real preview artifact | Passed locally |
-| Clean-checkout fixtures and ordered CI | `.github/workflows/checks.yml` | Pending Actions |
+| Clean-checkout fixtures and ordered CI | `.github/workflows/checks.yml` | Passed on Actions |
 
 ## Self-review boundary
 

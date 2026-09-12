@@ -39,3 +39,11 @@ pnpm-debug.log*
 
 # Local agent notes
 AGENT.md
+
+# Synthetic browser test runtime and evidence
+.e2e-runtime/
+frontend/playwright-report/
+frontend/test-results/
+frontend/e2e-logs/
+
+.e2e-venv/

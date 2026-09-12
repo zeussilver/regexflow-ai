@@ -75,6 +75,7 @@ export interface PhoneNormalizationStats {
 }
 
 export interface PhoneNormalizationResponse {
+  target_columns: string[];
   file_id: string;
   processed_file_id?: string;
   transformation: "phone_normalization";

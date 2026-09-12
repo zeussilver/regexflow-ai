@@ -833,3 +833,8 @@ tbody tr:nth-child(even) td {
     min-width: 0;
   }
 }
+
+.saved-rule-controls { border: 0; padding: 0; display: grid; gap: 1rem; }
+.saved-rule-controls input:not([type="checkbox"]), .saved-rule-controls select { padding: 0.6rem; max-width: 100%; }
+.saved-rule-controls details { margin: 1rem 0; }
+.saved-rule-controls button { margin: 0.5rem 0; padding: 0.65rem 1rem; }

@@ -22,7 +22,8 @@ if (kind === 'model') {
         res.writeHead(400); res.end('{}'); return;
       }
       if (mode === '503') { res.writeHead(503); res.end('{}'); return; }
-      const content = mode === 'invalid-json' ? 'not json' : JSON.stringify({
+      const isPhone = payload.messages[0]?.content?.includes('phone-number normalization rule assistant');
+      const content = isPhone && mode === 'normal' ? JSON.stringify({ transformation_type: 'phone_normalization', default_region: 'AU', target_format: 'E164', preserve_invalid: true, explanation: 'Synthetic phone rule' }) : mode === 'invalid-json' ? 'not json' : JSON.stringify({
         regex: mode === 'invalid-regex' ? '[' : 'TOKEN-[0-9]+', flags: [],
         explanation: 'Synthetic marker rule', confidence: 'high',
       });

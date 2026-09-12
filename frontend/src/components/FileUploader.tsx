@@ -3,12 +3,14 @@ import { ChangeEvent, FormEvent, useState } from "react";
 interface FileUploaderProps {
   isUploading: boolean;
   onUpload: (file: File) => Promise<void>;
+  onFileSelected: () => void;
   onClientError: (message: string) => void;
 }
 
 export default function FileUploader({
   isUploading,
   onUpload,
+  onFileSelected,
   onClientError,
 }: FileUploaderProps) {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -17,6 +19,7 @@ export default function FileUploader({
   function handleFileChange(event: ChangeEvent<HTMLInputElement>) {
     const nextFile = event.target.files?.[0] ?? null;
     setSelectedFile(nextFile);
+    onFileSelected();
     onClientError("");
   }
 

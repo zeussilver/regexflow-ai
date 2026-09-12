@@ -18,9 +18,13 @@ Neither PR is merged or deployed. Historical QA reports are preserved.
 | Old version unchanged, file/version clears preview | Browser version and selection assertions | Passed locally |
 | No model during reuse | Rejecting local model service; exact zero-call assertion per rule browser case | Passed locally |
 | All original regressions preserved | 66 original Django cases + 7 original browser cases | Passed locally |
-| Final remote checks | Final head and Actions link recorded in PR description | Pending Actions |
+| Final remote checks | Final head and Actions link recorded in PR description | Passed on Actions |
 
 Local environment: Python 3.11.14, Node 22.23.0, matching Playwright Chromium.
+Full implementation CI passed at https://github.com/zeussilver/regexflow-ai/actions/runs/34700872281
+(head `e9c90812ad79e1948477020cbb3fb546ccf30ddf`). The PR description records
+the final documentation commit and its own passing Actions run.
+
 Current total: 87 Django tests and 10 Playwright cases. Each browser run uses
 one worker and zero retries. Commands are in README's Automated regression checks.
 Browser screenshots and exact downloaded CSVs are attached to its HTML report.

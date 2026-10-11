@@ -512,18 +512,19 @@ Deployment-specific values to configure:
 
 Last-verified deployment status:
 
-This records the deployment state last checked on 2026-05-09 after redeploying `main`. It does not prove that future local or uncommitted changes are deployed; redeploy and reverify after code or configuration changes.
+This records the deployment state last checked on 2026-10-12 after merging #1 to #4 and redeploying `main`. It does not prove that future local or uncommitted changes are deployed; redeploy and reverify after code or configuration changes.
 
-- Frontend production URL: `https://frontend-gamma-gold-32.vercel.app`
+- Frontend production URL: `https://frontend-gamma-gold-32.vercel.app` (CDR product checks: `#product-checks`)
 - Backend API: `https://regexflow-ai-backend.onrender.com/api`
 - Backend health check: `https://regexflow-ai-backend.onrender.com/api/health/`
 - Production branch: `main`
-- Verified frontend production deployment: `dpl_GXnfZ5YKaLn4P3KrT1hsHtfaiwae`
-- Verified frontend deployment URL: `https://frontend-4ztsf66z8-zeussilver1663-2783s-projects.vercel.app`
-- Verified commit: `04769f7` (`merge phase6 final delivery`)
-- Verified Vercel production env: `VITE_API_BASE_URL=https://regexflow-ai-backend.onrender.com/api`
-- Verified Render backend deploy: `dep-d7vho10u1m9s73ct95ng`
-- Last verified: 2026-05-09 21:38 AEST
+- Verified frontend production deployment: `dpl_BY43jzxmX6MAghbY7Gw3iZdLZw5s`, built from `96e5e45` (#4 changed only the backend)
+- Verified frontend deployment URL: `https://frontend-ic1g0epsq-zeussilver1663-2783s-projects.vercel.app`
+- Verified backend commit: `c680394` (`Merge pull request #4 from zeussilver/fix-empty-product-list`)
+- Verified Vercel production env: `VITE_API_BASE_URL` set for Production
+- Verified Render backend deploy: `dep-db5q9nf40ujc73cnnlv0` (Oregon; build runs migrations)
+- Checks: health, sample CDR upload (13 errors, 5 warnings), live CommBank and ING checks with details, Westpac returning `HOLDER_RETURNED_NO_PRODUCTS` from the US-hosted backend, product checks workspace loading against the production API
+- Last verified: 2026-10-12 02:05 AEDT
 
 ## Known Limitations
 

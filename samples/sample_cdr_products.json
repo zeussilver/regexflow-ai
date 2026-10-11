@@ -1,0 +1,193 @@
+{
+  "data": {
+    "products": [
+      {
+        "productId": "EXAMPLE-EVERYDAY-01",
+        "lastUpdated": "2026-09-30T09:15:00Z",
+        "productCategory": "TRANS_AND_SAVINGS_ACCOUNTS",
+        "name": "Example Everyday Account",
+        "description": "A transaction account with no monthly account fee.",
+        "brand": "EXAMPLE",
+        "brandName": "Example Bank",
+        "applicationUri": "https://www.example.com.au/everyday/apply",
+        "isTailored": false,
+        "additionalInformation": {
+          "overviewUri": "https://www.example.com.au/everyday",
+          "termsUri": "https://www.example.com.au/everyday/terms.pdf"
+        },
+        "fees": [
+          {
+            "name": "Monthly account fee",
+            "feeType": "PERIODIC",
+            "feeMethodUType": "fixedAmount",
+            "fixedAmount": {"amount": "0.00"},
+            "currency": "AUD",
+            "additionalValue": "P1M"
+          }
+        ]
+      },
+      {
+        "productId": "EXAMPLE-BONUS-SAVER-01",
+        "lastUpdated": "2026-09-30T09:15:00Z",
+        "productCategory": "TRANS_AND_SAVINGS_ACCOUNTS",
+        "name": "Example Bonus Saver",
+        "description": "A savings account that pays bonus interest when the balance grows each month.",
+        "brand": "EXAMPLE",
+        "brandName": "Example Bank",
+        "applicationUri": "http://www.example.com.au/bonus-saver/apply",
+        "isTailored": false,
+        "additionalInformation": {
+          "overviewUri": "https://www.example.com.au/bonus-saver"
+        },
+        "depositRates": [
+          {
+            "depositRateType": "VARIABLE",
+            "rate": "4.75",
+            "calculationFrequency": "P1D",
+            "applicationType": "PERIODIC",
+            "applicationFrequency": "P1M"
+          },
+          {
+            "depositRateType": "BONUS",
+            "rate": "0.0025",
+            "calculationFrequency": "P1D",
+            "applicationType": "PERIODIC",
+            "applicationFrequency": "monthly"
+          }
+        ]
+      },
+      {
+        "productId": "EXAMPLE-TD-12M-01",
+        "lastUpdated": "2026-09-30",
+        "productCategory": "TERM_DEPOSITS",
+        "name": "Example 12 Month Term Deposit",
+        "description": "A fixed rate term deposit for 12 months.",
+        "brand": "EXAMPLE",
+        "brandName": "Example Bank",
+        "isTailored": false,
+        "additionalInformation": {
+          "overviewUri": "https://www.example.com.au/term-deposits"
+        },
+        "features": [
+          {
+            "featureType": "OTHER",
+            "additionalInfo": "Interest paid at maturity."
+          }
+        ]
+      },
+      {
+        "productId": "EXAMPLE-HOME-FIXED-01",
+        "lastUpdated": "2026-09-30T09:15:00Z",
+        "productCategory": "RESIDENTIAL_MORTGAGES",
+        "name": "Example Fixed Rate Home Loan",
+        "description": "A home loan with a 2 year fixed rate for owner occupiers.",
+        "brand": "EXAMPLE",
+        "brandName": "Example Bank",
+        "applicationUri": "https://www.example.com.au/home-loans/fixed/apply",
+        "isTailored": false,
+        "additionalInformation": {
+          "overviewUri": "https://www.example.com.au/home-loans/fixed"
+        },
+        "lendingRates": [
+          {
+            "lendingRateType": "FIXED",
+            "rate": "0.0599",
+            "calculationFrequency": "P1D",
+            "applicationType": "PERIODIC",
+            "applicationFrequency": "P1M",
+            "repaymentType": "PRINCIPAL_AND_INTEREST",
+            "loanPurpose": "OWNER_OCCUPIED",
+            "additionalValue": "P2Y"
+          },
+          {
+            "lendingRateType": "VARIABLE",
+            "rate": "0.0649",
+            "comparisonRate": "0.0662",
+            "calculationFrequency": "P1D",
+            "applicationType": "PERIODIC",
+            "applicationFrequency": "P1M",
+            "repaymentType": "PRINCIPAL_AND_INTEREST",
+            "loanPurpose": "OWNER_OCCUPIED",
+            "tiers": [
+              {
+                "name": "LVR up to 80%",
+                "unitOfMeasure": "PERCENT",
+                "minimumValue": "0",
+                "maximumValue": "80",
+                "rateApplicationMethod": "WHOLE_BALANCE"
+              }
+            ]
+          },
+          {
+            "lendingRateType": "DISCOUNT",
+            "rate": "-0.0050",
+            "calculationFrequency": "P1D",
+            "applicationType": "PERIODIC",
+            "applicationFrequency": "P1M",
+            "repaymentType": "PRINCIPAL_AND_INTEREST",
+            "loanPurpose": "OWNER_OCCUPIED",
+            "additionalInfo": "Package discount off the variable rate."
+          }
+        ],
+        "fees": [
+          {
+            "name": "Application fee",
+            "feeType": "UPFRONT",
+            "feeMethodUType": "fixedAmount",
+            "fixedAmount": {"amount": "250"},
+            "currency": "AUD"
+          },
+          {
+            "name": "Break cost",
+            "feeType": "EVENT",
+            "feeMethodUType": "variable",
+            "currency": "AUD",
+            "additionalInfo": "Break costs may apply if the fixed rate ends early."
+          }
+        ]
+      },
+      {
+        "productId": "EXAMPLE-HOME-FIXED-01",
+        "lastUpdated": "2026-09-30T09:15:00Z",
+        "productCategory": "CRED_AND_CHRG_CARDS",
+        "name": "Example Low Rate Card ",
+        "description": "A credit card with a low purchase rate.",
+        "brand": "EXAMPLE",
+        "brandName": "Example Bank",
+        "isTailored": false,
+        "additionalInformation": {
+          "overviewUri": "https://www.example.com.au/cards/low-rate "
+        },
+        "lendingRates": [
+          {
+            "lendingRateType": "PURCHASE",
+            "rate": "0.1299",
+            "calculationFrequency": "P1D",
+            "applicationType": "PERIODIC",
+            "applicationFrequency": "P1M",
+            "repaymentType": "UNCONSTRAINED",
+            "loanPurpose": "UNCONSTRAINED"
+          }
+        ]
+      },
+      {
+        "productId": "EXAMPLE-LEGACY-SAVER-01",
+        "lastUpdated": "2025-06-30T00:00:00Z",
+        "effectiveTo": "2025-06-30T00:00:00Z",
+        "productCategory": "SAVINGS_ACCOUNTS",
+        "name": "Example Legacy Saver",
+        "description": "",
+        "brand": "EXAMPLE",
+        "brandName": "Example Bank",
+        "isTailored": "false"
+      }
+    ]
+  },
+  "links": {
+    "self": "https://api.example.com.au/cds-au/v1/banking/products?page=1&page-size=25"
+  },
+  "meta": {
+    "totalRecords": 6,
+    "totalPages": 1
+  }
+}

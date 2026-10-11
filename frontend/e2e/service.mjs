@@ -4,6 +4,32 @@ import { mkdirSync, rmSync, createWriteStream } from 'node:fs';
 import { resolve } from 'node:path';
 
 const kind = process.argv[2];
+// A synthetic CDR data holder for live product checks (public PRD endpoints).
+const holderProduct = (id, name, extra = {}) => ({
+  productId: id, lastUpdated: '2026-01-15T00:00:00Z', productCategory: 'PERS_LOANS', name,
+  description: `${name} for e2e checks.`, brand: 'FIXTURE', isTailored: false, ...extra,
+});
+const holderRate = rate => ({
+  lendingRateType: 'VARIABLE', rate, comparisonRate: '0.0899', applicationType: 'PERIODIC',
+  applicationFrequency: 'P1M', repaymentType: 'PRINCIPAL_AND_INTEREST', loanPurpose: 'OTHER',
+});
+const holderDetails = {
+  'FIX-1': holderProduct('FIX-1', 'Fixture Personal Loan', { lendingRates: [holderRate('0.0849')] }),
+  'FIX-2': holderProduct('FIX-2', 'Fixture Percent Loan', { lendingRates: [holderRate('8.49')] }),
+};
+function serveHolder(req, res) {
+  if (!req.headers['x-v']) { res.writeHead(400); res.end('{}'); return; }
+  const list = req.url === '/holder/cds-au/v1/banking/products?page-size=100';
+  const detail = holderDetails[req.url.split('/banking/products/')[1]];
+  res.setHeader('x-v', list ? '5' : '7');
+  if (list) {
+    res.end(JSON.stringify({ data: { products: Object.values(holderDetails).map(({ lendingRates, ...summary }) => summary) }, links: {}, meta: { totalRecords: 2, totalPages: 1 } }));
+  } else if (detail) {
+    res.end(JSON.stringify({ data: detail, links: {} }));
+  } else {
+    res.writeHead(404); res.end('{}');
+  }
+}
 mkdirSync('e2e-logs', { recursive: true });
 const log = createWriteStream(`e2e-logs/${kind}.log`, { flags: 'w' });
 if (kind === 'model') {
@@ -11,6 +37,7 @@ if (kind === 'model') {
   createServer(async (req, res) => {
     let raw = ''; for await (const chunk of req) raw += chunk;
     res.setHeader('Content-Type', 'application/json');
+    if (req.url.startsWith('/holder/')) { serveHolder(req, res); return; }
     if (req.url === '/reset' && req.method === 'POST') {
       mode = JSON.parse(raw).mode ?? 'normal'; calls = 0;
     } else if (req.url === '/v1/chat/completions' && req.method === 'POST') {

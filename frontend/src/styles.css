@@ -838,3 +838,34 @@ tbody tr:nth-child(even) td {
 .saved-rule-controls input:not([type="checkbox"]), .saved-rule-controls select { padding: 0.6rem; max-width: 100%; }
 .saved-rule-controls details { margin: 1rem 0; }
 .saved-rule-controls button { margin: 0.5rem 0; padding: 0.65rem 1rem; }
+
+.app-views { display: flex; flex-wrap: wrap; gap: 12px; width: min(1180px, calc(100vw - 32px)); margin: 0 auto; padding-top: 24px; }
+.app-view { min-width: 200px; min-height: 52px; background: #fafbf4; color: #17201b; box-shadow: 4px 4px 0 #17201b; }
+.app-view:hover:not(:disabled) { background: #e7ead9; }
+.app-view.active, .app-view.active:hover:not(:disabled) { background: #17201b; color: #ffffff; }
+.product-checks-panel { padding: 24px; border: 1px solid #17201b; background: #fafbf4; box-shadow: 6px 6px 0 #17201b; }
+.product-checks-panel h2 { margin: 0; font-size: clamp(1.45rem, 3vw, 2.1rem); line-height: 1.1; }
+.product-checks-panel h3 { margin: 0 0 12px; }
+.product-checks-intro, .product-check-meta { color: #4e5a4d; }
+.product-check-form { display: grid; grid-template-columns: auto minmax(220px, 1fr) auto auto; gap: 16px; align-items: end; margin: 18px 0 0; padding: 14px; border: 1px solid #17201b; background: #ffffff; }
+.product-check-form legend { font-weight: 900; }
+.product-check-sources { display: grid; gap: 6px; }
+.product-check-form .checkbox-option span { white-space: normal; }
+.product-check-result, .product-check-history { margin-top: 24px; }
+.product-check-result .download-link { margin-bottom: 16px; }
+.product-check-table { margin-top: 12px; }
+.product-check-filter { max-width: 220px; margin-top: 16px; }
+.issues-table td { white-space: normal; overflow-wrap: anywhere; }
+.issues-table td:nth-child(-n + 2) { white-space: nowrap; overflow-wrap: normal; }
+.severity-error, .severity-warning { font-size: 0.78rem; font-weight: 900; text-transform: uppercase; }
+.severity-error { color: #8f2b16; }
+.severity-warning { color: #7a5b00; }
+.compact-button { min-width: 0; min-height: 36px; padding: 0 12px; }
+.product-check-rules { margin-top: 24px; }
+.product-check-rules ul { columns: 2 320px; padding-left: 18px; }
+
+@media (max-width: 760px) {
+  .app-views { width: min(100vw - 20px, 640px); }
+  .app-view { flex: 1; min-width: 0; }
+  .product-check-form { grid-template-columns: 1fr; }
+}

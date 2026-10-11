@@ -20,3 +20,4 @@ CORS_ALLOW_ALL_ORIGINS = False
 CORS_ALLOWED_ORIGINS = ["http://127.0.0.1:4173"]
 ALLOWED_HOSTS = ["127.0.0.1", "localhost", "testserver"]
 DEBUG = False
+CDR_DATA_HOLDERS = {"fixture": ("Fixture Bank", "http://127.0.0.1:8766/holder")}

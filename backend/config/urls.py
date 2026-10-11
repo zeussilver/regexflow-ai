@@ -7,4 +7,5 @@ urlpatterns = [
     path("api/files/", include("apps.files.urls")),
     path("api/regex/", include("apps.regex_engine.urls")),
     path("api/transformations/", include("apps.transformations.urls")),
+    path("api/product-checks/", include("apps.product_checks.urls")),
 ]

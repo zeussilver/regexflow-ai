@@ -54,6 +54,7 @@ INSTALLED_APPS = [
     "apps.regex_engine",
     "apps.transformations",
     "apps.rules",
+    "apps.product_checks",
 ]
 
 MIDDLEWARE = [
@@ -136,4 +137,19 @@ REST_FRAMEWORK = {
     ],
     "EXCEPTION_HANDLER": "apps.common.exception_handlers.structured_exception_handler",
     "UNAUTHENTICATED_USER": None,
+    "DEFAULT_THROTTLE_RATES": {
+        "product_checks_live": os.getenv("PRODUCT_CHECKS_LIVE_RATE", "20/hour"),
+    },
+}
+
+# productBaseUri values from the CDR Register brands summary
+# (GET https://api.cdr.gov.au/cdr-register/v1/banking/data-holders/brands/summary, x-v 2),
+# checked 2026-10-11. Live product checks may only call these hosts.
+CDR_DATA_HOLDERS = {
+    "anz": ("ANZ", "https://api.anz"),
+    "commbank": ("CommBank", "https://api.commbank.com.au/public"),
+    "ing": ("ING", "https://id.ob.ing.com.au"),
+    "macquarie": ("Macquarie Bank", "https://api.macquariebank.io"),
+    "nab": ("NAB", "https://openbank.api.nab.com.au"),
+    "westpac": ("Westpac", "https://digital-api.westpac.com.au"),
 }

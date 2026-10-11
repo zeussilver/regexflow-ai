@@ -11,6 +11,8 @@ The app also includes two optional transformation assistants:
 
 RegexFlow AI uses the LLM only to propose regex patterns or bounded transformation policies. The backend performs validation and deterministic data rewriting so the LLM does not directly rewrite uploaded table data.
 
+A second workspace, **CDR product checks**, applies the same "rules, not guesses" approach to Open Banking data: it checks Consumer Data Right (CDR) banking product reference data, live from a bank's public product APIs or from an uploaded JSON response, against 23 deterministic rules based on the Consumer Data Standards. See [CDR product data checks](#cdr-product-data-checks).
+
 ## Live Demo
 
 - Source code: `https://github.com/zeussilver/regexflow-ai/tree/main`
@@ -53,6 +55,7 @@ Recommended viewing order: Regex pattern matching and replacement -> PII Redacti
 - Optional PII redaction across selected columns or all text-like columns.
 - Optional phone normalization using `phonenumbers` and a configurable default region.
 - Structured API errors for frontend-friendly validation and failure messages.
+- CDR product data checks: 23 deterministic rules over Get Products and Get Product Detail data, with live checks of six major Australian data holders, persisted runs, CSV issue reports and detection of content changes without a new `lastUpdated`.
 
 ## Tech Stack
 
@@ -62,6 +65,7 @@ Recommended viewing order: Regex pattern matching and replacement -> PII Redacti
 | Data processing | pandas, openpyxl |
 | LLM integration | OpenAI-compatible chat completions API |
 | Transformations | Python `re`, custom validation, `phonenumbers` |
+| Open Banking data | CDR Get Products v5, Get Product Detail v7, CDR Register base URIs |
 | Frontend | React 18, TypeScript, Vite, Axios |
 | Local orchestration | Optional Docker Compose |
 
@@ -103,7 +107,9 @@ regexflow-ai/
 │   └── apps/
 │       ├── common/
 │       ├── files/
+│       ├── product_checks/
 │       ├── regex_engine/
+│       ├── rules/
 │       └── transformations/
 ├── frontend/
 │   ├── package.json
@@ -114,6 +120,7 @@ regexflow-ai/
 │       ├── pages/
 │       └── types/
 ├── samples/
+│   ├── sample_cdr_products.json
 │   ├── sample_email_redaction.csv
 │   ├── sample_pii_redaction.csv
 │   └── sample_phone_normalization.csv
@@ -136,6 +143,7 @@ Use the files in `samples/` for local testing and demo recording:
 | `samples/sample_email_redaction.csv` | Regex generation and replacement demo using the `Email` column. |
 | `samples/sample_pii_redaction.csv` | PII redaction demo with email, phone, credit-card, URL, and invalid values. |
 | `samples/sample_phone_normalization.csv` | Phone normalization demo using Australian numbers and one invalid value. |
+| `samples/sample_cdr_products.json` | Synthetic CDR Get Products response with seeded data-quality issues for the CDR product checks workspace. |
 
 The upload API also supports `.xlsx` files, but the committed sample datasets are CSV files.
 
@@ -200,6 +208,7 @@ Create `backend/.env` from `backend/.env.example`.
 | `MAX_UPLOAD_SIZE_MB` | `5` | Upload size limit used by deployment configuration and documentation. |
 | `PREVIEW_ROW_LIMIT` | `50` | Preview row limit used by deployment configuration and documentation. |
 | `DATABASE_URL` | `postgresql://user:password@host:port/dbname` | Optional PostgreSQL connection string. If omitted, local SQLite is used. |
+| `PRODUCT_CHECKS_LIVE_RATE` | `20/hour` | Per-client limit for live CDR product checks, which call banks' public APIs. |
 
 If `LLM_API_KEY`, `LLM_BASE_URL`, or `LLM_MODEL` is missing or still set to a placeholder, LLM-backed endpoints return `LLM_CONFIG_MISSING`.
 
@@ -524,6 +533,7 @@ This records the deployment state last checked on 2026-05-09 after redeploying `
 - Regex generation depends on configured LLM provider.
 - PII detection is practical but not compliance-grade.
 - Phone normalization depends on `phonenumbers` and default region.
+- CDR product checks cover the rules listed below, not every conditional rule in the Consumer Data Standards, and are not a compliance assessment.
 
 ## Future Improvements
 
@@ -534,6 +544,7 @@ This records the deployment state last checked on 2026-05-09 after redeploying `
 - Expand transformation assistants while keeping deterministic backend execution.
 - Expand browser coverage beyond the Chromium synthetic regression suite.
 - Add deployment-specific health checks and observability.
+- Schedule CDR product checks and alert when a data holder publishes new issues.
 
 ## Author
 
@@ -638,3 +649,85 @@ Rules and history are shared in this **unauthenticated demo**. There is no tenan
 isolation, compliance-grade PII detection, approval workflow, deletion, rollback,
 or scheduler. Names and column names are user-supplied metadata: do not put real
 personal data in them. See [versioned-rule QA](docs/QA_VERSIONED_PHONE_RULES.md).
+
+## CDR product data checks
+
+Comparison sites and lenders read banks' public CDR Product Reference Data
+(PRD) to show rates, fees and product terms. A rate published as `5.99` instead
+of `0.0599`, a broken terms link or a stale `lastUpdated` reaches consumers
+unchanged. The **CDR product checks** workspace (`#product-checks`) finds these
+issues with deterministic rules; no model is involved.
+
+1. Choose **Live data holder** and one of the configured brands, or **Upload
+   JSON** with a Get Products response, a Get Product Detail response, or an
+   array of products. `samples/sample_cdr_products.json` is synthetic and seeds
+   one issue for most rules.
+2. **Run checks** to see products checked, products with errors, errors,
+   warnings, counts by rule and the first 200 issues. **Download CSV** exports
+   every issue. **Recent checks** reopens earlier runs.
+
+Live checks call `GET /cds-au/v1/banking/products` and, when product details are
+included, `GET /cds-au/v1/banking/products/{productId}` for up to 300 products
+with six parallel requests and a 45-second budget; products beyond it are
+checked from Get Products only. Requests send `x-v`/`x-min-v` (Get Products 5/4,
+Get Product Detail 7/6), follow `links.next` only on the same host, and record
+the versions the holder served. Only the base URIs in `CDR_DATA_HOLDERS` can be
+called; they are the `productBaseUri` values from the CDR Register brands
+summary. The holder's own `Date` header is the reference clock, so a skewed
+server clock cannot cause or hide a future `lastUpdated`. Both the Get Products
+entry and the product detail are checked, and fields that differ between them
+are reported. Each live run stores a fingerprint of every product; the next run
+for the same holder and API versions reports products whose content changed
+while `lastUpdated` did not.
+
+| Rule | Severity | Check |
+| --- | --- | --- |
+| PRD-001 | error | Mandatory field missing or empty (product, rate, fee and card art fields; primary URI when additional URIs exist) |
+| PRD-002 | error | Duplicate `productId` in one response |
+| PRD-003 | error | Wrong JSON type, such as `"false"` for a Boolean or an object for an array |
+| PRD-004 | error | `lastUpdated`, `effectiveFrom` or `effectiveTo` is not an RFC 3339 date-time with an offset |
+| PRD-005 | error | `lastUpdated` is more than 5 minutes ahead of the reference clock |
+| PRD-006 | warning | `effectiveTo` is earlier than `effectiveFrom` |
+| PRD-007 | warning | `effectiveTo` has passed but the product is still published |
+| PRD-008 | error | Value outside a CDS enum (category, rate, fee, repayment, purpose, card types) |
+| PRD-009 | error | Invalid URI: empty, whitespace, disallowed characters or not absolute http(s) |
+| PRD-010 | warning | URI uses `http` instead of `https` |
+| PRD-011 | error | Rate is not a RateString |
+| PRD-012 | error | Rate above 100%, usually a percentage published as `5.99` instead of `0.0599` |
+| PRD-013 | error | Rate frequency is not an ISO 8601 duration |
+| PRD-014 | error | Fee amount is not an AmountString |
+| PRD-015 | error | `feeMethodUType` names an object that is missing |
+| PRD-016 | warning | Non-tailored home or personal loan `FIXED`/`VARIABLE` rate without `comparisonRate` |
+| PRD-017 | warning | Non-tailored term deposit, home loan, personal loan or card without rates |
+| PRD-018 | error | Listed product whose detail request fails |
+| PRD-019 | warning | Get Products and Get Product Detail publish different values |
+| PRD-020 | warning | Leading or trailing whitespace in product text |
+| PRD-021 | error | Negative bonus, discount, introductory or penalty rate ([standards-maintenance #641](https://github.com/ConsumerDataStandardsAustralia/standards-maintenance/issues/641)) |
+| PRD-022 | error | `PERCENT` tier bound above 1, such as `80` for 80% ([standards-maintenance #614](https://github.com/ConsumerDataStandardsAustralia/standards-maintenance/issues/614)) |
+| PRD-023 | error | Content changed since the previous live run without a new `lastUpdated` ([standards-maintenance #564](https://github.com/ConsumerDataStandardsAustralia/standards-maintenance/issues/564)) |
+
+PRD-012, PRD-016, PRD-017 and PRD-020 are heuristics: the standard allows the
+value, but it is almost always a mistake or makes products hard to compare.
+
+| Endpoint | Request / result |
+| --- | --- |
+| `POST /api/product-checks/` | JSON `holder` and optional `include_details` (true), or multipart `file` (`.json`, 5 MB); returns `run`, `by_rule`, up to 200 `issues`, `issues_truncated` |
+| `GET /api/product-checks/` | `{runs: [...]}`, the 20 most recent runs |
+| `GET /api/product-checks/{run_id}/` | The same payload as the original check |
+| `GET /api/product-checks/holders/` | Configured data holders |
+| `GET /api/product-checks/rules/` | Ruleset version and rules |
+
+The CSV report is downloaded from `/api/files/processed/{report_file_id}/download/`.
+The same checks run from the command line, for example on a schedule:
+
+```bash
+cd backend
+python manage.py migrate
+python manage.py check_cdr_products commbank westpac
+python manage.py check_cdr_products --summary-only
+```
+
+Live checks are limited to 20 per client per hour (`PRODUCT_CHECKS_LIVE_RATE`)
+because each one fans out to a bank's public API. Runs and reports are shared in
+this unauthenticated demo. Findings are point-in-time observations of public data,
+not a compliance assessment. See [CDR product checks QA](docs/QA_PRODUCT_CHECKS.md).

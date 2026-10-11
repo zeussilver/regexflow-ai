@@ -32,7 +32,8 @@ def bool_env(name: str, default: bool) -> bool:
     return raw_value.strip().lower() in {"1", "true", "yes", "on"}
 
 
-load_env_file(BASE_DIR / ".env")
+if os.getenv("DJANGO_SKIP_ENV_FILE") != "1":
+    load_env_file(BASE_DIR / ".env")
 
 SECRET_KEY = os.getenv(
     "DJANGO_SECRET_KEY",

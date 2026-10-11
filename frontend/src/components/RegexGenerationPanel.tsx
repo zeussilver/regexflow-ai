@@ -31,6 +31,7 @@ export default function RegexGenerationPanel({
         </div>
       </div>
 
+      <p>Generating regex may send selected-column samples and up to 10 rows × 12 columns of context to an external model. Redacting output does not prevent input disclosure. Use synthetic data for public demos.</p>
       <div className="regex-form">
         <ColumnSelector
           columns={columns}

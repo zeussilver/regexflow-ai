@@ -532,9 +532,47 @@ This records the deployment state last checked on 2026-05-09 after redeploying `
 - Add large-file streaming and background job processing.
 - Add richer audit logs for generated rules and applied transformations.
 - Expand transformation assistants while keeping deterministic backend execution.
-- Add end-to-end browser tests for the complete upload-to-download workflow.
+- Expand browser coverage beyond the Chromium synthetic regression suite.
 - Add deployment-specific health checks and observability.
 
 ## Author
 
 RegexFlow AI was prepared for final delivery by Zhenqian Liu.
+
+## Automated regression checks
+
+Use Python 3.11 and Node 22. From the repository root:
+
+```bash
+python3.11 -m venv backend/.venv
+backend/.venv/bin/python -m pip install -r backend/requirements.txt
+backend/.venv/bin/python scripts/generate_test_fixtures.py
+(cd backend && .venv/bin/python manage.py test --settings=config.test_settings)
+cd frontend
+npm ci
+npm run build
+npx playwright install --with-deps chromium
+E2E_PYTHON="$PWD/../backend/.venv/bin/python" npm run test:e2e
+npm run test:e2e:report
+```
+
+The runner builds and previews the real frontend, starts Django on 8765 and a
+fixed OpenAI-compatible service on 8766 (frontend: 4173). Ports must be free;
+existing servers are never reused. One Chromium worker, zero retries, readiness
+checks and locator assertions are used. No browser business-API interception is
+used. Each test resets the model service and checks real model request counts.
+`config.test_settings` skips local `.env`, forces dummy model configuration and
+isolates SQLite and media under ignored `.e2e-runtime/`, reset on server startup.
+The fixed service verifies transport and failure handling, not real-model quality.
+
+PRs (including stacked PRs), pushes to main, and manual runs execute Django tests,
+TypeScript/build, then browser tests. HTML reports include exact CSV download
+attachments; failures retain screenshots and traces. Service logs contain no
+request bodies or credentials. GitHub artifacts expire after 14 days. See
+[Playwright CI](https://playwright.dev/docs/ci) and
+[GitHub artifact retention](https://docs.github.com/en/actions/tutorials/store-and-share-data).
+
+Generating regex may send selected-column samples and up to 10 rows and 12
+columns of context to an external model. Redacting the output does not prevent
+input disclosure. Public demos must use synthetic data. This is an unauthenticated
+shared demo, without user isolation or compliance-grade PII detection.

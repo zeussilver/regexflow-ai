@@ -21,11 +21,18 @@ and #641.
 | Content change without a new `lastUpdated` flagged on the next run of the same holder and versions | `LiveCheckTests` | Passed locally |
 | Browser: upload the sample, stats, severity filter, exact CSV download, live fixture holder, API error display | `frontend/e2e/product-checks.spec.ts` | Passed locally |
 | Original regressions preserved | 87 Django tests and 10 Playwright cases | Passed locally |
+| Final remote checks | PR #3 head `f8dca9c` on GitHub Actions | Passed on Actions |
 
 Current totals: 119 Django tests and 13 Playwright cases, run with Python
 3.12.12 and Node 22. The commands are in README's Automated regression checks.
 The browser run uses the fixed service on 8766 as a synthetic data holder, so no
 real bank API is called in CI.
+
+CI passed at https://github.com/zeussilver/regexflow-ai/actions/runs/38148229007
+(head `f8dca9c7258b1a95ac52686a1a554d41a80b2390`, Python 3.11.17, Node 22.23.3):
+119 Django tests, migration drift check, TypeScript/build and 13 Chromium cases.
+Artifact `browser-regression-evidence` holds the synthetic downloads and report;
+it expires 2026-10-25.
 
 ## Live observation
 

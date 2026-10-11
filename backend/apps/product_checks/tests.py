@@ -744,6 +744,7 @@ class LiveCheckTests(ApiTestCase):
             ((500, {}, {"errors": []}), "HOLDER_API_ERROR"),
             ((200, {}, b"{not json"), "HOLDER_INVALID_RESPONSE"),
             ((200, {}, {"data": {}}), "HOLDER_INVALID_RESPONSE"),
+            ((200, {}, {"data": {"products": []}, "links": {}}), "HOLDER_RETURNED_NO_PRODUCTS"),
             (
                 (200, {}, {"data": {"products": []}, "links": {"next": "https://elsewhere.example/p2"}}),
                 "HOLDER_INVALID_RESPONSE",

@@ -727,6 +727,11 @@ python manage.py check_cdr_products commbank westpac
 python manage.py check_cdr_products --summary-only
 ```
 
+Live checks run from the server's network. In production, one data holder
+returned an empty product list to the US-hosted backend while serving its full
+catalogue to an Australian network, so an empty list is reported as
+`HOLDER_RETURNED_NO_PRODUCTS` instead of a clean result.
+
 Live checks are limited to 20 per client per hour (`PRODUCT_CHECKS_LIVE_RATE`)
 because each one fans out to a bank's public API. Runs and reports are shared in
 this unauthenticated demo. Findings are point-in-time observations of public data,

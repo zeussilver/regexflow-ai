@@ -176,6 +176,18 @@ def _fetch_product_list(holder: DataHolder) -> tuple[list[dict], str, datetime]:
             )
         url = _next_page_url(payload, holder)
 
+    if not products:
+        # Seen in production: a holder served an empty list to a server outside
+        # Australia but its full catalogue to an Australian network.
+        raise ProductSourceError(
+            code="HOLDER_RETURNED_NO_PRODUCTS",
+            message=(
+                "The data holder returned an empty product list. Some data holders "
+                "filter requests by network location, so results can differ outside "
+                "Australia."
+            ),
+            status_code=status.HTTP_502_BAD_GATEWAY,
+        )
     return products, list_version, reference_time or timezone.now()
 
 

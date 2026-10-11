@@ -3,6 +3,7 @@ import { useState } from "react";
 import { uploadFile } from "../api/files";
 import { applyReplacement, generateRegex } from "../api/regex";
 import { normalizePhones, redactPii } from "../api/transformations";
+import SavedPhoneRules from "../components/SavedPhoneRules";
 import DataPreviewTable from "../components/DataPreviewTable";
 import ErrorMessage from "../components/ErrorMessage";
 import FileUploader from "../components/FileUploader";
@@ -63,8 +64,8 @@ export default function HomePage() {
   const activeTransformationResult =
     transformationMode === "pii_redaction" ? piiResult : phoneResult;
 
-  async function handleUpload(file: File) {
-    setIsUploading(true);
+  function clearFileState() {
+    setPreviewData(null);
     setErrorMessage(null);
     setReplaceError(null);
     setTransformationError(null);
@@ -75,7 +76,11 @@ export default function HomePage() {
     setTargetColumn("");
     setPiiTargetColumns([]);
     setPhoneTargetColumn("");
+  }
 
+  async function handleUpload(file: File) {
+    setIsUploading(true);
+    clearFileState();
     try {
       const response = await uploadFile(file);
       setPreviewData(response);
@@ -226,6 +231,7 @@ export default function HomePage() {
       <FileUploader
         isUploading={isUploading}
         onUpload={handleUpload}
+        onFileSelected={clearFileState}
         onClientError={(message) => setErrorMessage(message || null)}
       />
       <ErrorMessage message={errorMessage} />
@@ -333,6 +339,7 @@ export default function HomePage() {
       <ErrorMessage message={transformationError} />
       <TransformationResultTable result={activeTransformationResult} />
       <TransformationStatsCard result={activeTransformationResult} />
+      <SavedPhoneRules key={previewData?.file_id ?? "no-file"} fileId={previewData?.file_id} successfulRule={phoneResult} />
     </main>
   );
 }

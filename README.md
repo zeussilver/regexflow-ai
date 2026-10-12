@@ -502,6 +502,46 @@ Environment variable:
   VITE_API_BASE_URL=https://your-backend-domain.com/api
 ```
 
+### Backend on AWS (Sydney)
+
+`deploy/aws/regexflow-backend.yaml` runs the backend in `ap-southeast-2`. One
+t4g.micro EC2 instance builds `backend/Dockerfile` and runs it as a non-root,
+read-only container behind CloudFront, which provides HTTPS. The security group
+admits only CloudFront's origin-facing ranges, there is no SSH (administration is
+through SSM), the Django secret key is generated on the instance, and LLM
+settings come from SSM Parameter Store under `/regexflow/`. Hosting in Australia
+matters for live CDR checks: one data holder returned an empty product list to a
+US-hosted backend but its full catalogue to Sydney.
+
+```bash
+aws cloudformation create-stack --region ap-southeast-2 --stack-name regexflow-backend \
+  --template-body file://deploy/aws/regexflow-backend.yaml --capabilities CAPABILITY_IAM \
+  --parameters ParameterKey=GitRef,ParameterValue=<commit> \
+    ParameterKey=VpcId,ParameterValue=<vpc-id> ParameterKey=SubnetId,ParameterValue=<public-subnet-id> \
+    ParameterKey=CloudFrontPrefixListId,ParameterValue=<com.amazonaws.global.cloudfront.origin-facing id>
+```
+
+The stack completes only after the API answers its health check on the instance
+(20-minute limit). Create `/regexflow/llm-api-key` as a SecureString and
+`/regexflow/llm-base-url` and `/regexflow/llm-model` as Strings, without putting
+the key in shell history, then restart the container. Later releases rebuild from
+a commit through SSM Run Command:
+
+```bash
+aws ssm send-command --region ap-southeast-2 --instance-ids <instance-id> \
+  --document-name AWS-RunShellScript --parameters 'commands=["systemctl restart regexflow"]'
+aws ssm send-command --region ap-southeast-2 --instance-ids <instance-id> \
+  --document-name AWS-RunShellScript --parameters 'commands=["/opt/regexflow/deploy.sh <commit>"]'
+```
+
+The template passed cfn-lint 1.57.2 with no findings and cfn-guard 3.2.1 with no
+violations against the AWS Guard Rules Registry Well-Architected Security Pillar,
+ACSC ISM and APRA CPG 234 rule packs. At Sydney on-demand prices it costs about
+USD 12.50 a month (t4g.micro, one public IPv4 address, 12 GB gp3); CloudFront
+usage stays within its free tier at demo traffic. SQLite and media live on the
+instance volume, so replacing the instance clears demo history. Remove everything
+with `aws cloudformation delete-stack --region ap-southeast-2 --stack-name regexflow-backend`.
+
 Deployment-specific values to configure:
 
 - Backend host and CORS origin values.

@@ -53,6 +53,24 @@ test("uploaded sample products are checked, filtered and exported", async ({ pag
   );
 });
 
+test("a slow server shows a loading state instead of zero rules", async ({ page }) => {
+  let release = () => {};
+  const held = new Promise<void>((resolve) => (release = resolve));
+  await page.route("**/api/product-checks/rules/", async (route) => {
+    await held;
+    await route.continue();
+  });
+  await openChecks(page);
+  await expect(result(page).getByRole("status")).toContainText("Loading data holders and rules");
+  await expect(result(page)).not.toContainText("0 deterministic rules");
+  await expect(page.getByRole("button", { name: "Run checks", exact: true })).toBeDisabled();
+
+  release();
+  await expect(result(page)).toContainText(/[1-9]\d* deterministic rules/);
+  await expect(result(page).getByRole("status")).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Run checks", exact: true })).toBeEnabled();
+});
+
 test("live check reads the data holder's public product APIs", async ({ page }) => {
   await openChecks(page);
   await page.getByRole("combobox", { name: "Data holder", exact: true }).selectOption("fixture");

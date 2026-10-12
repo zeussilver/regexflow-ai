@@ -32,6 +32,7 @@ export default function ProductChecksPanel() {
   const [severity, setSeverity] = useState<IssueSeverity | "all">("all");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [catalogueLoading, setCatalogueLoading] = useState(true);
   const holderName = holders.find((item) => item.key === holder)?.name ?? holder;
   const ready = source === "live" ? Boolean(holder) : Boolean(file);
 
@@ -47,6 +48,9 @@ export default function ProductChecksPanel() {
       })
       .catch((err) => {
         if (active) setError(productCheckError(err));
+      })
+      .finally(() => {
+        if (active) setCatalogueLoading(false);
       });
     return () => {
       active = false;
@@ -83,10 +87,17 @@ export default function ProductChecksPanel() {
       <h2 id="product-checks-heading">CDR product data checks</h2>
       <p className="product-checks-intro">
         Check Consumer Data Right banking product reference data against{" "}
-        {rules.length} deterministic rules based on the Consumer Data Standards.
+        {rules.length > 0 && `${rules.length} `}deterministic rules based on the
+        Consumer Data Standards.
         Live checks call a bank&apos;s public Get Products and Get Product Detail
         APIs; uploads accept either response as JSON.
       </p>
+      {catalogueLoading && (
+        <p role="status">
+          Loading data holders and rules. The server can take up to a minute to
+          start after a quiet period.
+        </p>
+      )}
 
       <form onSubmit={handleSubmit}>
         <fieldset className="product-check-form" disabled={busy}>
@@ -109,6 +120,7 @@ export default function ProductChecksPanel() {
               <label className="field-block">
                 Data holder
                 <select value={holder} onChange={(e) => setHolder(e.target.value)}>
+                  {catalogueLoading && <option value="">Loading data holders</option>}
                   {holders.map((item) => (
                     <option key={item.key} value={item.key}>
                       {item.name}

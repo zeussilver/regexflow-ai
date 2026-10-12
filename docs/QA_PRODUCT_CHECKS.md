@@ -56,3 +56,15 @@ with Sydney local time labelled as UTC, but the cause was not confirmed.
 These are point-in-time observations of public endpoints using standards-based
 and heuristic rules. They are not a compliance assessment, and data holders may
 have changed the data since.
+
+## Loading state
+
+The production backend can take up to a minute to start after a quiet period.
+Until the data holders and rules arrived, the workspace said "0 deterministic
+rules" and showed an empty data holder list and a disabled button with no
+explanation. It now shows a loading message and a placeholder option instead.
+
+| Requirement | Artifact / reproducible evidence | Status |
+| --- | --- | --- |
+| While the rules request is held, a loading status is shown, "0 deterministic rules" is never shown and Run checks stays disabled; once released, the rule count appears, the status goes and Run checks is enabled | `frontend/e2e/product-checks.spec.ts` ("a slow server shows a loading state instead of zero rules") | Fails on the previous component; passes with the fix |
+| Existing regressions preserved | 14 Playwright cases | Passed locally (Python 3.9.6, Node 22) |

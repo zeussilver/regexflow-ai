@@ -17,10 +17,10 @@ A second workspace, **CDR product checks**, applies the same "rules, not guesses
 
 - Source code: `https://github.com/zeussilver/regexflow-ai/tree/main`
 - Frontend: `https://frontend-gamma-gold-32.vercel.app`
-- Backend API: `https://regexflow-ai-backend.onrender.com/api`
+- Backend API: `https://d2ktpfnznac7jy.cloudfront.net/api` (AWS Sydney; see [Backend on AWS (Sydney)](#backend-on-aws-sydney))
 - Production branch: `main`
 
-The public frontend URL is configured to call the Render backend API. Local setup remains available for development and fallback testing.
+The public frontend calls the AWS Sydney backend. The earlier Render backend (`https://regexflow-ai-backend.onrender.com/api`) still runs as a fallback. Local setup remains available for development and fallback testing.
 
 ## Demo Videos
 
@@ -552,19 +552,21 @@ Deployment-specific values to configure:
 
 Last-verified deployment status:
 
-This records the deployment state last checked on 2026-10-12 after merging #1 to #4 and redeploying `main`. It does not prove that future local or uncommitted changes are deployed; redeploy and reverify after code or configuration changes.
+This records the deployment state last checked on 2026-10-13 after merging #6 and moving the frontend to the AWS Sydney backend. It does not prove that future local or uncommitted changes are deployed; redeploy and reverify after code or configuration changes.
 
 - Frontend production URL: `https://frontend-gamma-gold-32.vercel.app` (CDR product checks: `#product-checks`)
-- Backend API: `https://regexflow-ai-backend.onrender.com/api`
-- Backend health check: `https://regexflow-ai-backend.onrender.com/api/health/`
+- Backend API: `https://d2ktpfnznac7jy.cloudfront.net/api` (CloudFormation stack `regexflow-backend`, `ap-southeast-2`)
+- Backend health check: `https://d2ktpfnznac7jy.cloudfront.net/api/health/`
 - Production branch: `main`
-- Verified frontend production deployment: `dpl_BY43jzxmX6MAghbY7Gw3iZdLZw5s`, built from `96e5e45` (#4 changed only the backend)
-- Verified frontend deployment URL: `https://frontend-ic1g0epsq-zeussilver1663-2783s-projects.vercel.app`
-- Verified backend commit: `c680394` (`Merge pull request #4 from zeussilver/fix-empty-product-list`)
-- Verified Vercel production env: `VITE_API_BASE_URL` set for Production
-- Verified Render backend deploy: `dep-db5q9nf40ujc73cnnlv0` (Oregon; build runs migrations)
-- Checks: health, sample CDR upload (13 errors, 5 warnings), live CommBank and ING checks with details, Westpac returning `HOLDER_RETURNED_NO_PRODUCTS` from the US-hosted backend, product checks workspace loading against the production API
-- Last verified: 2026-10-12 02:05 AEDT
+- Verified frontend production deployment: `dpl_DDKNmVvUVpHWUFhu7oT8KffsjAFN`, built from `f00790f` (`Merge pull request #6 from zeussilver/fix-product-checks-loading`)
+- Verified frontend deployment URL: `https://frontend-oa9rzft2s-zeussilver1663-2783s-projects.vercel.app`
+- Verified Vercel production env: `VITE_API_BASE_URL=https://d2ktpfnznac7jy.cloudfront.net/api`; the page requests only that host
+- Verified backend commit: `9913535` on the AWS instance; `backend/` is unchanged from `c680394` to `f00790f`
+- Verified backend configuration: `/regexflow/llm-api-key`, `/regexflow/llm-base-url` and `/regexflow/llm-model` in SSM Parameter Store, loaded by restarting `regexflow` through SSM Run Command
+- Checks: health, 23 rules and six data holders listed, sample CDR upload (6 products, 13 errors, 5 warnings), live Westpac (64 products, 13 warnings) and ING (14 products, no issues) checks with details, regex generation for the email sample (11 s) and PII redaction (8 s) through the configured LLM, product checks workspace loading 23 rules from the AWS API
+- Rollback: set Vercel `VITE_API_BASE_URL` back to `https://regexflow-ai-backend.onrender.com/api` and redeploy. The Render service (`dep-db5q9nf40ujc73cnnlv0`, Oregon, free plan, root directory `backend`) still runs `c680394`; it sleeps when idle, and its Cloudflare edge has returned HTTP 429 to some clients.
+- The template fixes `LLM_TIMEOUT_SECONDS` at 20, while Render uses 60; the checked LLM requests finished in 11 s or less.
+- Last verified: 2026-10-13 01:30 AEDT
 
 ## Known Limitations
 

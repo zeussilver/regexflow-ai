@@ -1,0 +1,265 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >-
+  RegexFlow AI backend in Sydney: one EC2 instance runs the Django API in Docker
+  behind CloudFront. The instance accepts HTTP only from CloudFront, has no SSH,
+  generates its own Django secret key and reads LLM settings from SSM under /regexflow.
+  Hosting in Australia lets live CDR product checks reach data holders that only
+  serve product data to Australian networks.
+
+Metadata:
+  AWSToolsMetrics:
+    AWSAgentToolkit: aws-cloudformation@3
+  com.aws.cloudformation.Context:
+    why: >-
+      Low-cost demo hosting that keeps the repository's Dockerfile, mirrors the
+      donate-demo pattern, and gives the Vercel frontend an HTTPS API in ap-southeast-2.
+    must:
+      - Deploy in ap-southeast-2 only.
+      - Never put LLM keys or the Django secret key in this template or its parameters.
+
+Parameters:
+  RepoUrl:
+    Type: String
+    Default: https://github.com/zeussilver/regexflow-ai.git
+  GitRef:
+    Type: String
+    Default: main
+    Description: Commit or branch built on first boot. Later releases use /opt/regexflow/deploy.sh through SSM.
+  AllowedOrigins:
+    Type: String
+    Default: https://frontend-gamma-gold-32.vercel.app,https://frontend-zeussilver1663-2783s-projects.vercel.app
+    Description: Comma-separated frontend origins allowed by Django CORS.
+  VpcId:
+    Type: AWS::EC2::VPC::Id
+    Description: VPC for the instance and its security group
+  SubnetId:
+    Type: AWS::EC2::Subnet::Id
+    Description: Public subnet in VpcId (the instance needs a public DNS name as the CloudFront origin)
+  CloudFrontPrefixListId:
+    Type: String
+    Description: Managed prefix list com.amazonaws.global.cloudfront.origin-facing in this region
+  InstanceType:
+    Type: String
+    Default: t4g.micro
+    AllowedValues: [t4g.micro, t4g.small]
+  ImageId:
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Default: /aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-arm64
+
+Resources:
+  InstanceRole:
+    Type: AWS::IAM::Role
+    Metadata:
+      com.aws.cloudformation.Context:
+        why: SSM Session Manager and Run Command replace SSH; the app reads only /regexflow/* parameters.
+        must:
+          - Keep parameter access scoped to /regexflow/*.
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal: { Service: ec2.amazonaws.com }
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - !Sub arn:${AWS::Partition}:iam::aws:policy/AmazonSSMManagedInstanceCore
+        - !Ref ReadParametersPolicy
+
+  ReadParametersPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Metadata:
+      com.aws.cloudformation.Context:
+        why: A customer-managed policy instead of an inline one, so access is auditable on its own.
+        must:
+          - Grant only ssm:GetParameter on /regexflow/*.
+    Properties:
+      Description: Read RegexFlow settings from SSM Parameter Store
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Action: ssm:GetParameter
+            Resource: !Sub arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter/regexflow/*
+
+  InstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Roles: [!Ref InstanceRole]
+
+  WebSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Metadata:
+      com.aws.cloudformation.Context:
+        why: Only CloudFront may reach the origin; there is no SSH.
+        must:
+          - Never allow 0.0.0.0/0 ingress.
+    Properties:
+      GroupDescription: HTTP from CloudFront only; no SSH
+      VpcId: !Ref VpcId
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          SourcePrefixListId: !Ref CloudFrontPrefixListId
+          Description: CloudFront origin-facing ranges
+
+  Instance:
+    Type: AWS::EC2::Instance
+    CreationPolicy:
+      ResourceSignal:
+        Timeout: PT20M   # first boot builds the image; the stack fails if the API never answers
+    Metadata:
+      com.aws.cloudformation.Context:
+        why: >-
+          Builds the backend image from the repository on first boot and runs it as a
+          non-root, read-only container. SQLite and media live on the encrypted root
+          volume, so demo data is lost if the instance is replaced.
+        must:
+          - Keep the Django secret key on the instance; do not move it into the template.
+    Properties:
+      ImageId: !Ref ImageId
+      InstanceType: !Ref InstanceType
+      IamInstanceProfile: !Ref InstanceProfile
+      SubnetId: !Ref SubnetId
+      SecurityGroupIds: [!GetAtt WebSecurityGroup.GroupId]
+      BlockDeviceMappings:
+        - DeviceName: /dev/xvda
+          Ebs: { VolumeSize: 12, VolumeType: gp3, Encrypted: true }
+      Tags:
+        - { Key: Name, Value: regexflow-backend }
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          set -euo pipefail
+          signal() {
+            /opt/aws/bin/cfn-signal -e "$1" --stack ${AWS::StackName} --resource Instance --region ${AWS::Region}
+          }
+          trap 'signal 1' ERR
+          dnf install -y docker git aws-cfn-bootstrap
+          systemctl enable --now docker
+
+          # 1 GB swap: pandas and two gunicorn workers on a 1 GB instance.
+          if [ ! -f /swapfile ]; then
+            dd if=/dev/zero of=/swapfile bs=1M count=1024
+            chmod 600 /swapfile && mkswap /swapfile
+            echo '/swapfile none swap defaults 0 0' >> /etc/fstab
+          fi
+          swapon -a
+
+          install -d -m 755 /opt/regexflow
+          install -d -m 700 -o 1000 -g 1000 /opt/regexflow/data /opt/regexflow/media
+          # The Django signing key is generated here and never leaves the instance.
+          if [ ! -f /opt/regexflow/secret_key ]; then
+            head -c 48 /dev/urandom | base64 | tr -d '\n' > /opt/regexflow/secret_key
+            chmod 600 /opt/regexflow/secret_key
+          fi
+
+          cat > /opt/regexflow/deploy.sh <<'DEPLOY'
+          #!/bin/bash
+          # Usage: deploy.sh <git ref>. Rebuilds the image and restarts the API.
+          set -euo pipefail
+          src=/opt/regexflow/src
+          [ -d $src/.git ] || git clone ${RepoUrl} $src
+          git -C $src fetch --quiet origin
+          git -C $src checkout --quiet --detach "$1"
+          docker build --quiet -t regexflow-backend $src/backend
+          systemctl restart regexflow
+          git -C $src rev-parse HEAD > /opt/regexflow/deployed_commit
+          DEPLOY
+
+          cat > /opt/regexflow/run.sh <<'RUN'
+          #!/bin/bash
+          # Reads settings at every start, so new SSM values apply after a restart.
+          set -euo pipefail
+          param() {
+            aws ssm get-parameter --region ${AWS::Region} --name "/regexflow/$1" \
+              --with-decryption --query Parameter.Value --output text 2>/dev/null || true
+          }
+          env_file=/opt/regexflow/runtime.env
+          umask 077
+          {
+            echo "DJANGO_SKIP_ENV_FILE=1"
+            echo "DJANGO_SECRET_KEY=$(cat /opt/regexflow/secret_key)"
+            echo "DJANGO_DEBUG=False"
+            echo "DJANGO_ALLOWED_HOSTS=.cloudfront.net"
+            echo "CORS_ALLOWED_ORIGINS=${AllowedOrigins}"
+            echo "DATABASE_URL=sqlite:////data/db.sqlite3"
+            echo "LLM_PROVIDER=openai_compatible"
+            echo "LLM_TIMEOUT_SECONDS=20"
+            echo "LLM_API_KEY=$(param llm-api-key)"
+            echo "LLM_BASE_URL=$(param llm-base-url)"
+            echo "LLM_MODEL=$(param llm-model)"
+          } > $env_file
+          docker rm -f regexflow >/dev/null 2>&1 || true
+          exec docker run --name regexflow --env-file $env_file -p 80:8000 \
+            --user 1000:1000 --read-only --tmpfs /tmp --memory 700m \
+            -v /opt/regexflow/data:/data -v /opt/regexflow/media:/app/media \
+            regexflow-backend sh -c "python manage.py migrate --noinput && \
+              exec gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers 2 --timeout 90"
+          RUN
+
+          chmod 700 /opt/regexflow/deploy.sh /opt/regexflow/run.sh
+          cat > /etc/systemd/system/regexflow.service <<'UNIT'
+          [Unit]
+          Description=RegexFlow AI backend container
+          After=docker.service network-online.target
+          Requires=docker.service
+
+          [Service]
+          ExecStart=/opt/regexflow/run.sh
+          ExecStop=/usr/bin/docker stop regexflow
+          Restart=always
+          RestartSec=5
+
+          [Install]
+          WantedBy=multi-user.target
+          UNIT
+          systemctl daemon-reload
+          systemctl enable regexflow
+          /opt/regexflow/deploy.sh ${GitRef}
+
+          for attempt in $(seq 1 30); do
+            if curl -fsS -H 'Host: health.cloudfront.net' http://127.0.0.1/api/health/; then
+              signal 0
+              exit 0
+            fi
+            sleep 5
+          done
+          signal 1
+
+  Distribution:
+    Type: AWS::CloudFront::Distribution
+    Metadata:
+      com.aws.cloudformation.Context:
+        why: >-
+          HTTPS endpoint for the Vercel frontend. Caching is disabled because every
+          request is an API call; live product checks can take up to about 45 seconds.
+        must:
+          - Keep OriginReadTimeout at or above 60 seconds.
+    Properties:
+      DistributionConfig:
+        Enabled: true
+        Comment: regexflow-backend
+        PriceClass: PriceClass_All   # includes Australian edge locations
+        HttpVersion: http2and3
+        Origins:
+          - Id: api
+            DomainName: !GetAtt Instance.PublicDnsName
+            CustomOriginConfig:
+              HTTPPort: 80
+              OriginProtocolPolicy: http-only
+              OriginReadTimeout: 60
+        DefaultCacheBehavior:
+          TargetOriginId: api
+          ViewerProtocolPolicy: redirect-to-https
+          AllowedMethods: [GET, HEAD, OPTIONS, PUT, PATCH, POST, DELETE]
+          CachedMethods: [GET, HEAD]
+          Compress: true
+          CachePolicyId: 4135ea2d-6df8-44a3-9df3-4b5a84be39ad          # Managed-CachingDisabled
+          OriginRequestPolicyId: 216adef6-5c7f-47e4-b989-5492eafa07d3  # Managed-AllViewer (Host, Origin for CORS)
+
+Outputs:
+  ApiBaseUrl:
+    Value: !Sub https://${Distribution.DomainName}/api
+  InstanceId:
+    Value: !Ref Instance
